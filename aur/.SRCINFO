@@ -25,6 +25,6 @@ pkgbase = netcloud-music-bin
 	provides = netcloud-music
 	conflicts = netcloud-music
 	source = netcloud-music-0.1.0.pacman::https://github.com/lxp731/NetCloudMusic-Webplayer/releases/download/v0.1.0/netcloud-music-0.1.0-x64.pacman
-	sha256sums = SKIP
+	sha256sums = 2e29480c404a9dad455f0b4e1b490e5db00a577d60e8a156a1ca1ce21c4126c2
 
 pkgname = netcloud-music-bin

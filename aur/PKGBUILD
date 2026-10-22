@@ -18,7 +18,7 @@ conflicts=('netcloud-music')
 source=(
   "netcloud-music-${pkgver}.pacman::https://github.com/lxp731/NetCloudMusic-Webplayer/releases/download/v${pkgver}/netcloud-music-${pkgver}-x64.pacman"
 )
-sha256sums=('SKIP')
+sha256sums=('2e29480c404a9dad455f0b4e1b490e5db00a577d60e8a156a1ca1ce21c4126c2')
 
 package() {
   # 上游的 .pacman 是 electron-builder 产物，内部就是 usr/ + opt/ 布局；

@@ -72,9 +72,11 @@ netcloud-music-0.1.0-x64.pacman
 - AUR：`aur/` 里是 `netcloud-music-bin` 的 PKGBUILD + .SRCINFO，下载 GitHub Release 的
   `.pacman` 解包安装。
 - CI 发布：`.github/workflows/build-release.yml` —— 打 `v*` tag 会在 GitHub Actions
-  （ubuntu + Node 24 + pnpm 10）上构建四个分发包并自动创建 Release；手动
-  `workflow_dispatch` 只构建不上传。发布前先 bump `package.json` 的 `version`，再
-  `git tag v<version> && git push --tags`。
+  （ubuntu + Node 24 + pnpm 10）上构建四个分发包、创建 GitHub Release，并自动把
+  `aur/` 推送到 AUR（`netcloud-music-bin`）。手动 `workflow_dispatch` 只构建不发布。
+  发布前先 bump `package.json` 的 `version`，再 `git tag v<version> && git push --tags`。
+- AUR 自动发布需要仓库 secret `AUR_SSH_PRIVATE_KEY` 存**私钥**（公钥加到 AUR 账户）；
+  首次发布要先在 https://aur.archlinux.org/packages/netcloud-music-bin 手动 Submit 一次。
 - 打包时 `usocket`（dbus-next 的可选 C++ 依赖）被排除，运行时走 `net.createConnection`
   fallback（session bus 为 path socket 时生效，现代 systemd 桌面均如此）。
 
