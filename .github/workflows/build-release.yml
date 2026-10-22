@@ -1,0 +1,84 @@
+name: Build & Release
+
+# 打 tag（v0.1.0 这种）时构建并发布 Release；也可手动触发只构建不发布。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write # 创建 Release 需要
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 新版 Node：24 LTS。pnpm 10 需要 Node >= 18.12，electron-builder 26 也
+      # 建议用较新的 LTS，这里固定 24 避免 runner 默认的旧版本。
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # deb 需要 dpkg-deb（ubuntu 自带）；rpm 需要 rpmbuild；pacman 需要 bsdtar。
+      # electron-builder 的 fpm 会从 PATH 里找这些工具。
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm libarchive-tools
+
+      # 缓存 electron / fpm 下载，二次构建快很多。
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-electron-${{ hashFiles('package.json') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Release 版本必须和 package.json 一致，避免产物文件名和 tag 对不上。
+      - name: Verify version matches tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG_VERSION pkg=$PKG_VERSION"
+          [ "$TAG_VERSION" = "$PKG_VERSION" ] || {
+            echo "::error::tag v$TAG_VERSION 与 package.json 的 $PKG_VERSION 不一致，先 bump 版本再打 tag"
+            exit 1
+          }
+
+      - name: Build Linux packages (AppImage / deb / rpm / pacman)
+        # publish 已在 electron-builder.yml 里置为 null，这里只产出分发包，
+        # 发布由下面的 softprops/action-gh-release 完成。
+        run: pnpm dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          if-no-files-found: error
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.pacman
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.pacman
+          generate_release_notes: true
