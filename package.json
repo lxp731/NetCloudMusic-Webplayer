@@ -34,8 +34,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lxp731/netcloud-music"
+    "url": "https://github.com/lxp731/NetCloudMusic-Webplayer"
   },
-  "homepage": "https://github.com/lxp731/netcloud-music",
+  "homepage": "https://github.com/lxp731/NetCloudMusic-Webplayer",
   "desktopName": "netcloud-music.desktop"
 }
