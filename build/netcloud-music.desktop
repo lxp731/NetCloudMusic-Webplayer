@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=NetCloud Music
+Name[zh_CN]=网易云音乐桌面版
+GenericName=Music Player
+Comment=Linux desktop shell for the NetEase Cloud Music web player
+Exec=netcloud-music %U
+Icon=netcloud-music
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+Keywords=music;netease;cloud;music;音乐;
+StartupNotify=true
+StartupWMClass=netcloud-music
+MimeType=x-scheme-handler/orpheus;x-scheme-handler/netease;

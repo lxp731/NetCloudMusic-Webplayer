@@ -1,0 +1,30 @@
+{
+  "name": "netcloud-music",
+  "productName": "NetCloud Music",
+  "version": "0.1.0",
+  "description": "Linux desktop shell for the NetEase Cloud Music web player",
+  "main": "src/main/index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "./tools/dev-run.sh --dev",
+    "probe": "NETCLOUD_VERBOSE=1 ./tools/dev-run.sh --dev --probe"
+  },
+  "dependencies": {
+    "dbus-next": "^0.10.2"
+  },
+  "devDependencies": {
+    "electron": "^42.11.18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
+  },
+  "author": "netcloud-music contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lxp731/netcloud-music"
+  }
+}
