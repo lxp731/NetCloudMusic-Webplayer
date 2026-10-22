@@ -183,6 +183,19 @@ if (isDev) {
   process.on('SIGUSR1', async () => {
     const win = windows.getWindow()
     if (!win || win.isDestroyed()) return
+    // Ad-hoc evaluation: drop JS into /tmp/netcloud-eval.js and SIGUSR1. Saves a
+    // restart per DOM experiment while reverse-engineering the web player.
+    try {
+      if (fs.existsSync('/tmp/netcloud-eval.js')) {
+        const code = fs.readFileSync('/tmp/netcloud-eval.js', 'utf8')
+        const result = await win.webContents.executeJavaScript(code)
+        log.info('[eval] ' + JSON.stringify(result, null, 1))
+        return
+      }
+    } catch (err) {
+      log.error('[eval] failed:', err.message)
+      return
+    }
     try {
       const info = await win.webContents.executeJavaScript(`(() => {
         const media = [...document.querySelectorAll('audio,video')].map((el) => ({
@@ -203,6 +216,10 @@ if (isDev) {
           mediaSession: navigator.mediaSession && navigator.mediaSession.metadata
             ? { title: navigator.mediaSession.metadata.title, artist: navigator.mediaSession.metadata.artist }
             : null,
+          transport: (() => {
+            const bar = all.filter((c) => c.top > innerHeight - 150 && /play|pause|播放|暂停/i.test(c.label));
+            return bar.map((c) => c.label.slice(0, 40));
+          })(),
           media, controls,
           inputs: document.querySelectorAll('input').length,
           hooks: !!window.__netcloudHooked,

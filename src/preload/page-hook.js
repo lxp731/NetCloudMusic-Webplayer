@@ -271,14 +271,16 @@
 
   // ---------------------------------------------------------------- controls
 
+  // Labels are aria-label + title + className concatenated, so patterns must be
+  // word-bounded rather than anchored ("pause cmd-icon cmd-icon-pause …").
   var SYNONYMS = {
-    play: [/^play$/, /cmd-icon-play($|-)/, /播放/],
-    pause: [/^pause$/, /cmd-icon-pause($|-)/, /暂停/],
-    playpause: [/^play$/, /^pause$/, /cmd-icon-play($|-)/, /cmd-icon-pause($|-)/],
-    next: [/^next$/, /^nexttrack$/, /cmd-icon-next($|-)/, /下一首|下一曲/],
-    prev: [/^prev$/, /^pre$/, /^previous$/, /^previoustrack$/, /cmd-icon-pre(v|-|$)/, /上一首|上一曲/],
-    loop: [/^loop$/, /^playmode$/, /^mode$/, /cmd-icon-(loop|mode|order|single)($|-)/, /播放模式|单曲循环|列表循环/],
-    shuffle: [/^shuffle$/, /^random$/, /cmd-icon-(shuffle|random)($|-)/, /随机播放/]
+    play: [/\bplay\b/, /cmd-icon-play\b/, /播放/],
+    pause: [/\bpause\b/, /cmd-icon-pause\b/, /暂停/],
+    playpause: [/\bplay\b/, /\bpause\b/, /cmd-icon-play\b/, /cmd-icon-pause\b/, /播放|暂停/],
+    next: [/\bnext\b/, /\bnexttrack\b/, /cmd-icon-next\b/, /下一首|下一曲/],
+    prev: [/\bprev\b/, /\bprevious\b/, /\bprevioustrack\b/, /\bpre\b/, /cmd-icon-pre(v|-|\b)/, /上一首|上一曲/],
+    loop: [/\bloop\b/, /\bplaymode\b/, /cmd-icon-(loop|mode|order|single)\b/, /播放模式|单曲循环|列表循环/],
+    shuffle: [/\bshuffle\b/, /\brandom\b/, /cmd-icon-(shuffle|random)\b/, /随机播放/]
   }
 
   function labelOf (el) {
@@ -342,6 +344,23 @@
   }
 
   function clickElement (el) {
+    // Prefer the real <button> (or [role="button"]) ancestor: one native
+    // .click() triggers the site's React onClick exactly once, so the site's own
+    // store (and therefore the play/pause icon) updates in lockstep with audio.
+    // The old path dispatched a synthetic sequence *and* then called
+    // parentElement.click(), which double-fired for buttons and left the icon
+    // disagreeing with the real playback state.
+    var button = null
+    try {
+      button = el.closest ? el.closest('button, [role="button"]') : null
+    } catch (_) {}
+    if (button) {
+      try {
+        button.click()
+        return
+      } catch (_) {}
+    }
+    // No native click() on the target: synthesize the full sequence instead.
     var rect = el.getBoundingClientRect()
     var opts = {
       bubbles: true,
@@ -355,27 +374,44 @@
     try { el.dispatchEvent(new PointerEvent('pointerup', opts)) } catch (_) {}
     try { el.dispatchEvent(new MouseEvent('mouseup', opts)) } catch (_) {}
     try { el.dispatchEvent(new MouseEvent('click', opts)) } catch (_) {}
-    // some handlers sit on the wrapper instead of the icon
-    try {
-      if (el.parentElement && el.parentElement !== document.body) el.parentElement.click()
-    } catch (_) {}
   }
 
-  function clickControl (type) {
+  function bestControl (type, filter) {
     var best = null
     var bestScore = 0
     var list = collectControls()
     for (var i = 0; i < list.length; i++) {
+      if (filter && !filter(list[i])) continue
       var s = scoreControl(list[i], type)
       if (s > bestScore) { bestScore = s; best = list[i] }
     }
-    if (!best || bestScore < 50) {
-      post('event', { kind: 'command-miss', type: type, candidates: list.length })
+    if (!best || bestScore < 50) return null
+    return { candidate: best, score: bestScore }
+  }
+
+  function clickControl (type) {
+    var found = bestControl(type)
+    if (!found) {
+      post('event', { kind: 'command-miss', type: type, candidates: collectControls().length })
       return false
     }
-    clickElement(best.el)
-    post('event', { kind: 'command-click', type: type, label: best.label.slice(0, 80), score: bestScore })
+    clickElement(found.candidate.el)
+    post('event', { kind: 'command-click', type: type, label: found.candidate.label.slice(0, 80), score: found.score })
     return true
+  }
+
+  // The transport bar's play/pause button is the site's own source of truth for
+  // the icon it renders: clicking it updates both the audio *and* the store, so
+  // the UI can never drift from what is actually playing. Element-level
+  // play()/pause() (our old path) left the site's state untouched, which is why
+  // the icon could disagree with the real state.
+  function transportControl () {
+    var found = bestControl('playpause', function (c) { return c.inBar })
+    if (!found) return null
+    var label = found.candidate.label.toLowerCase()
+    var playing = /pause|暂停/.test(label)
+    if (!playing && !/play|播放/.test(label)) return null
+    return { candidate: found.candidate, playing: playing }
   }
 
   function allMedia () {
@@ -478,12 +514,24 @@
       }
 
       if (type === 'play' || type === 'pause') {
+        var want = type === 'play'
         var el = media || allMedia()[0]
-        if (el && (el.currentSrc || el.src)) {
-          elementToggle(el, type === 'play')
+        var bar = transportControl()
+        if (bar) {
+          if (bar.playing !== want) {
+            clickElement(bar.candidate.el)
+            post('event', { kind: 'toggle', via: 'transport-bar', sitePlaying: bar.playing, directed: type })
+          } else if (el && el.paused === want) {
+            // site already agrees, only the audio is out of sync
+            elementToggle(el, want)
+          }
           return
         }
-        clickControl(type === 'play' ? 'play' : 'pause')
+        if (el && (el.currentSrc || el.src)) {
+          elementToggle(el, want)
+          return
+        }
+        clickControl(want ? 'play' : 'pause')
         return
       }
 
@@ -547,6 +595,12 @@
 
   // Space / tray / MPRIS all funnel here.
   function playPause () {
+    var bar = transportControl()
+    if (bar) {
+      clickElement(bar.candidate.el)
+      post('event', { kind: 'toggle', via: 'transport-bar', sitePlaying: bar.playing })
+      return
+    }
     var list = allMedia()
     var el = media || list[0]
     if (el && (el.currentSrc || el.src)) {

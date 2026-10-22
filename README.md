@@ -92,8 +92,10 @@ WAYLAND_DEBUG=client ./tools/dev-run.sh 2>&1 | grep -E 'set_app_id|set_title'
 翻页改用 `PageDown` / `PageUp` / 方向键。开关在 `src/preload/page-hook.js` 的
 `SPACE_TOGGLES_PLAYBACK` 常量。
 
-切换本身优先走 `<audio>.play()/pause()`；万一站点把元素换掉了导致 `play()` 无效，
-450ms 后检测到状态没变会自动退回"点播放条按钮"，并且 `play()` 被拒绝时也会立刻回退。
+切换**优先点播放条上的播放/暂停按钮**（`<button>` 里的 `cmd-icon-play/pause` 图标）：
+只有点击站点自己的按钮，站点的 React store 和 `<audio>` 才会同步更新，图标才不会和真实
+状态打架（直接 `el.play()/pause()` 只改了音频，站点的图标会停留在旧状态）。没有播放条、
+或按钮找不到时，才退回 `el.play()/pause()`，并带 450ms 的状态校验与自动重试。
 
 ## 它是怎么拿到播放状态的
 
