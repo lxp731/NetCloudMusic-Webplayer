@@ -6,7 +6,7 @@ const { app, Tray, Menu, nativeImage } = require('electron')
 const { PRODUCT_NAME } = require('../shared/config')
 const log = require('./logger')
 
-const ICON = path.join(__dirname, '..', '..', 'build', 'tray.png')
+const ICON = path.join(__dirname, '..', 'assets', 'tray.png')
 
 // Tray icon + a menu that mirrors the current playback state.
 // On KDE the tray is a StatusNotifierItem; Plasma's applet renders it natively.

@@ -9,22 +9,33 @@
   "scripts": {
     "start": "electron .",
     "dev": "./tools/dev-run.sh --dev",
-    "probe": "NETCLOUD_VERBOSE=1 ./tools/dev-run.sh --dev --probe"
+    "probe": "NETCLOUD_VERBOSE=1 ./tools/dev-run.sh --dev --probe",
+    "dist": "electron-builder --linux",
+    "dist:appimage": "electron-builder --linux AppImage",
+    "dist:pacman": "electron-builder --linux pacman",
+    "dist:deb": "electron-builder --linux deb",
+    "dist:rpm": "electron-builder --linux rpm"
   },
   "dependencies": {
     "dbus-next": "^0.10.2"
   },
   "devDependencies": {
-    "electron": "^42.11.18"
+    "electron": "^42.11.18",
+    "electron-builder": "^26.15.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "electron"
     ]
   },
-  "author": "netcloud-music contributors",
+  "author": {
+    "name": "netcloud-music contributors",
+    "email": "lxp731@users.noreply.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/lxp731/netcloud-music"
-  }
+  },
+  "homepage": "https://github.com/lxp731/netcloud-music",
+  "desktopName": "netcloud-music.desktop"
 }

@@ -10,7 +10,7 @@ const log = require('./logger')
 const HOOK_PATH = path.join(__dirname, '..', 'preload', 'page-hook.js')
 const PRELOAD_PATH = path.join(__dirname, '..', 'preload', 'index.js')
 const ERROR_PAGE = path.join(__dirname, '..', 'renderer', 'error.html')
-const APP_ICON = path.join(__dirname, '..', '..', 'build', 'icon-256.png')
+const APP_ICON = path.join(__dirname, '..', 'assets', 'icon-256.png')
 
 const DEFAULTS = { width: 1280, height: 820 }
 

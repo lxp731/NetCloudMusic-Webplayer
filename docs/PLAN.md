@@ -1,8 +1,10 @@
 # netcloud-music — 把 `music.163.com/st/webplayer` 包成真正的 Linux 桌面应用
 
-> **实施状态（2026-10-22）**：P0 + P1 已完成并实测通过（仓库 `~/workspace/netcloud-music`）。
+> **实施状态（2026-10-22）**：P0 + P1 + P2 已完成并实测通过（仓库 `~/workspace/netcloud-music`）。
 > 需求变更：**不使用系统通知**（P1 里的"切歌通知"已移除）；应用名统一为「网易云音乐」；
-> 使用品牌图标并在开发期安装了 `.desktop` + hicolor 图标。
+> 使用品牌图标（圆形裁切）并安装了 `.desktop` + hicolor 图标；空格键始终切换播放/暂停。
+> **P2 已交付**：AppImage / deb / rpm / pacman 四格式（`tools/build-linux.sh` 一键构建，
+> 构建工具自动下载到 `~/.cache/netcloud-music/pkg-tools`）+ AUR `netcloud-music-bin`（`aur/`）。
 > 下方 P2–P5 尚未开始。实测结论与实现细节见仓库 `README.md` 与 `docs/findings.md`。
 
 ## 0. 结论与前提

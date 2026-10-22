@@ -1,0 +1,89 @@
+appId: io.github.lxp731.netcloudmusic
+productName: NetCloud Music
+copyright: Copyright © 2026 netcloud-music contributors
+
+directories:
+  output: dist
+  buildResources: build
+
+# dbus-next has an optional native dep (usocket) for abstract unix sockets and
+# fd-passing. On modern systemd desktops the session bus is a *path* socket and
+# dbus-next falls back to net.createConnection, which is how it already runs in
+# dev. Shipping a compiled C++ addon would break cross-distro ABI, so we drop it
+# and rely on the fallback (see docs/findings.md).
+files:
+  - "!node_modules/**/usocket/**"
+  - "!docs{,/**}"
+  - "!tools{,/**}"
+  - "!build/*.svg"
+  - "!build/*.jpg"
+  - "!build/tray*"
+  - "!**/*.map"
+  - "!**/*.md"
+  - "!**/*.log"
+  - "!dist{,/**}"
+
+asar: true
+npmRebuild: false
+electronLanguages:
+  - zh-CN
+  - en-US
+
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+    - pacman
+  executableName: netcloud-music
+  icon: build/icons
+  category: AudioVideo
+  maintainer: lxp731 <lxp731@users.noreply.github.com>
+  vendor: netcloud-music contributors
+  synopsis: 网易云音乐网页版的 Linux 桌面外壳
+  description: 网易云音乐网页版（music.163.com/st/webplayer）的非官方 Linux 桌面外壳，提供系统托盘、MPRIS 与媒体键等桌面集成。
+  mimeTypes:
+    - x-scheme-handler/orpheus
+    - x-scheme-handler/netease
+  desktop:
+    entry:
+      Name: 网易云音乐
+      Name[zh_CN]: 网易云音乐
+      GenericName: 音乐播放器
+      Comment: 网易云音乐网页版的 Linux 桌面外壳
+      Keywords: music;netease;cloud;音乐;网易云;
+  syncDesktopName: true
+
+appImage:
+  artifactName: ${name}-${version}-${arch}.${ext}
+
+deb:
+  artifactName: ${name}_${version}_${arch}.${ext}
+  packageCategory: sound
+
+rpm:
+  artifactName: ${name}-${version}.${arch}.${ext}
+
+pacman:
+  artifactName: ${name}-${version}-${arch}.${ext}
+  # Arch 官方仓库没有 libappindicator-gtk3（AUR 才有），用官方库的
+  # libayatana-appindicator；ffmpeg 由 Electron 自带，去掉。
+  depends:
+    - c-ares
+    - gtk3
+    - http-parser
+    - libevent
+    - libxslt
+    - libxss
+    - minizip
+    - nss
+    - re2
+    - snappy
+    - libnotify
+    - libayatana-appindicator
+    - alsa-lib
+    - libpulse
+    - at-spi2-core
+    - xdg-utils
+
+publish: null

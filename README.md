@@ -24,7 +24,9 @@
 
 ## 状态
 
-P0 + P1 已实现并在 KDE Plasma(Wayland) / Electron 42 上实测：
+P0 + P1 + P2 已完成（KDE Plasma(Wayland) / Electron 42 实测）：
+- 桌面集成（MPRIS / 托盘 / 媒体键 / 空格播放暂停）见下
+- 分发包：**AppImage / deb / rpm / pacman + AUR**，见「构建与分发」
 
 - 打开即加载官方网页版，扫码登录，重启保持登录（`persist:netease` 分区）
 - **MPRIS2 全量接口**：`PlaybackStatus / Metadata（标题/艺人/专辑/封面/时长）/ Position / Volume`，
@@ -47,6 +49,30 @@ $ busctl --user call ... Next           → Metadata: 海屿你 — 马也_Crabb
 $ busctl --user call ... Previous       → Metadata: 一半一半 — Top Barry, INDEcompany
 $ busctl --user call ... Seek x 30000000 → Position 前进 30s
 ```
+
+## 构建与分发
+
+```bash
+tools/build-linux.sh                     # 一次出 AppImage + deb + rpm + pacman
+tools/build-linux.sh AppImage pacman     # 只出指定目标
+```
+
+产物在 `dist/`：
+
+```
+netcloud-music-0.1.0-x86_64.AppImage
+netcloud-music_0.1.0_amd64.deb
+netcloud-music-0.1.0.x86_64.rpm
+netcloud-music-0.1.0-x64.pacman
+```
+
+- deb/rpm 构建需要 `dpkg-deb` 和 `rpmbuild`；本机（Arch）没有时脚本会自动用 pacman
+  下载 `dpkg` / `rpm-tools` 并解包到 `~/.cache/netcloud-music/pkg-tools`（无需 root），
+  再用 wrapper 提供给 electron-builder 的 fpm。
+- AUR：`aur/` 里是 `netcloud-music-bin` 的 PKGBUILD + .SRCINFO，下载 GitHub Release 的
+  `.pacman` 解包安装。
+- 打包时 `usocket`（dbus-next 的可选 C++ 依赖）被排除，运行时走 `net.createConnection`
+  fallback（session bus 为 path socket 时生效，现代 systemd 桌面均如此）。
 
 ## 开发
 
