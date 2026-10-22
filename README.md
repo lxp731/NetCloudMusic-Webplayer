@@ -84,13 +84,12 @@ WAYLAND_DEBUG=client ./tools/dev-run.sh 2>&1 | grep -E 'set_app_id|set_title'
 
 | 场景 | 空格行为 |
 |---|---|
-| 有曲目（正在播或暂停中），焦点不在控件上 | **播放 / 暂停**（并阻止页面滚动） |
-| 焦点在按钮/链接等可交互元素上 | 交给页面自己处理（避免和浏览器"空格激活焦点"打架，也不会双触发） |
-| 光标在输入框 / textarea / contenteditable（搜索、重命名歌单…） | 输入空格，不拦截 |
-| 按住 Ctrl/Alt/Shift | 不拦截 |
-| 还没加载过任何曲目（全新启动、什么都没放） | 不拦截，空格照旧翻页 |
+| 焦点在程序内任意位置（首页 / 播放页 / 播放中 / 暂停中 / 刚启动） | **播放 / 暂停**；事件被吞掉，页面不翻页，焦点控件也不会被"空格激活" |
+| 还没播过任何歌 | 空格直接起播（优先点播放条，其次点第一个可见的播放按钮） |
+| 光标在输入框 / textarea / contenteditable（搜索、重命名歌单…） | 输入空格（唯一例外，否则搜索没法用） |
+| 按住 Ctrl/Alt/Shift | 不拦截，交给页面 |
 
-想翻页用 `PageDown` / `PageUp` / 方向键。开关在 `src/preload/page-hook.js` 的
+翻页改用 `PageDown` / `PageUp` / 方向键。开关在 `src/preload/page-hook.js` 的
 `SPACE_TOGGLES_PLAYBACK` 常量。
 
 切换本身优先走 `<audio>.play()/pause()`；万一站点把元素换掉了导致 `play()` 无效，

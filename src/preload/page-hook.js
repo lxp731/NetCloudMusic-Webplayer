@@ -472,14 +472,18 @@
       }
       if (mediaSessionHandler(type)) return
 
-      if (type === 'play' || type === 'pause' || type === 'playpause') {
+      if (type === 'playpause') {
+        playPause()
+        return
+      }
+
+      if (type === 'play' || type === 'pause') {
         var el = media || allMedia()[0]
         if (el && (el.currentSrc || el.src)) {
-          var wantPlay = type === 'play' ? true : type === 'pause' ? false : el.paused
-          elementToggle(el, wantPlay)
+          elementToggle(el, type === 'play')
           return
         }
-        clickControl('play')
+        clickControl(type === 'play' ? 'play' : 'pause')
         return
       }
 
@@ -498,15 +502,15 @@
 
   // ------------------------------------------------------------ space key
 
-  // The web player has no global playback shortcut: Space either scrolls the
-  // page or (after clicking a control) re-activates whatever has focus. Desktop
-  // clients use Space as play/pause, so we take it over — but only when it is
-  // unambiguous:
-  //   * never while typing (search box, rename dialogs, …)
-  //   * never while an interactive control has focus (the browser's own
-  //     Space-activates-focus behaviour is what the user expects there)
-  //   * never before anything has been loaded (keep page scrolling on first run)
-  //   * never with modifiers (Ctrl/Alt/Shift/Space belong to the page)
+  // The web player has no global playback shortcut: Space scrolls the page, or
+  // (after clicking a control) re-activates whatever has focus. This shell
+  // takes Space over completely, the way the desktop client behaves:
+  //   * focus anywhere in the app, any page, any playback state → play/pause
+  //   * nothing loaded yet → start playback (transport bar, else a play button)
+  //   * the page never gets the event, so it never scrolls or activates focus
+  // The single exception is text entry: typing a space in the search box /
+  // rename dialog must still type a space. Modifier combinations are passed
+  // through untouched.
   var SPACE_TOGGLES_PLAYBACK = true
 
   function isTextEntry (el) {
@@ -520,17 +524,6 @@
     return false
   }
 
-  function hasInteractiveFocus (el) {
-    try {
-      if (!el || !el.closest) return false
-      return !!el.closest(
-        'button,[role="button"],a[href],summary,label,[tabindex]:not([tabindex="-1"])'
-      )
-    } catch (_) {
-      return false
-    }
-  }
-
   function hookSpaceKey () {
     if (!SPACE_TOGGLES_PLAYBACK) return
     try {
@@ -539,20 +532,31 @@
           var isSpace = event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar'
           if (!isSpace) return
           if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return
-          if (event.defaultPrevented) return
           if (event.isComposing) return
           if (isTextEntry(event.target)) return
-          if (hasInteractiveFocus(event.target)) return
-          var list = allMedia()
-          if (!list.length) return // nothing loaded yet: let Space scroll
-          var el = media || list[0]
-          if (!(el.currentSrc || el.src)) return
+          // Swallow the event everywhere else: this also cancels the browser's
+          // "space activates the focused button" behaviour, so a focused play
+          // button cannot toggle twice.
           event.preventDefault()
           if (event.repeat) return
-          command({ type: 'playpause' })
+          playPause()
         } catch (_) {}
       }, true)
     } catch (_) {}
+  }
+
+  // Space / tray / MPRIS all funnel here.
+  function playPause () {
+    var list = allMedia()
+    var el = media || list[0]
+    if (el && (el.currentSrc || el.src)) {
+      elementToggle(el, el.paused)
+      return
+    }
+    // Nothing has played yet (fresh start, or the element was torn down):
+    // start playback the same way a click on the transport bar would.
+    post('event', { kind: 'play-from-idle' })
+    clickControl('play')
   }
 
   window.addEventListener('message', function (event) {
