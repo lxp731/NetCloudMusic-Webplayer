@@ -198,6 +198,7 @@ if (isDev) {
           : all.slice(0, 40);
         return {
           href: location.href, title: document.title,
+          scrollY: Math.round(window.scrollY), activeElement: (document.activeElement && (document.activeElement.tagName + '.' + String(document.activeElement.className).slice(0, 30))) || 'none',
           text: (document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 400),
           mediaSession: navigator.mediaSession && navigator.mediaSession.metadata
             ? { title: navigator.mediaSession.metadata.title, artist: navigator.mediaSession.metadata.artist }

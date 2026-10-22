@@ -411,6 +411,41 @@
     }
   }
 
+  // Toggling through the media element is the most reliable path, but the site
+  // occasionally swaps/unloads the element behind our back, in which case
+  // play() silently does nothing. Verify the result and fall back to clicking
+  // the transport-bar control.
+  function elementToggle (el, wantPlay) {
+    var before = el.paused
+    post('event', { kind: 'toggle', via: 'element', wantPlay: wantPlay, beforePaused: before })
+    try {
+      if (wantPlay) {
+        var promise = el.play()
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch(function (err) {
+            post('event', { kind: 'play-rejected', message: String(err && err.name) })
+            clickControl('play')
+          })
+        }
+      } else {
+        el.pause()
+      }
+      scheduleSend(true)
+    } catch (err) {
+      post('event', { kind: 'element-toggle-error', message: String(err && err.message) })
+      clickControl(wantPlay ? 'play' : 'pause')
+      return
+    }
+    setTimeout(function () {
+      try {
+        if (el.paused === before) {
+          post('event', { kind: 'element-toggle-stalled', wantPlay: wantPlay })
+          clickControl(wantPlay ? 'play' : 'pause')
+        }
+      } catch (_) {}
+    }, 450)
+  }
+
   var ACTION_OF = { play: 'play', pause: 'pause', next: 'nexttrack', prev: 'previoustrack' }
 
   function mediaSessionHandler (type) {
@@ -440,14 +475,9 @@
       if (type === 'play' || type === 'pause' || type === 'playpause') {
         var el = media || allMedia()[0]
         if (el && (el.currentSrc || el.src)) {
-          try {
-            if (type === 'pause') el.pause()
-            else if (type === 'play') el.play()
-            else if (el.paused) el.play()
-            else el.pause()
-            scheduleSend(true)
-            return
-          } catch (_) {}
+          var wantPlay = type === 'play' ? true : type === 'pause' ? false : el.paused
+          elementToggle(el, wantPlay)
+          return
         }
         clickControl('play')
         return
@@ -464,6 +494,65 @@
     } catch (err) {
       post('event', { kind: 'command-error', type: cmd && cmd.type, message: String(err && err.message) })
     }
+  }
+
+  // ------------------------------------------------------------ space key
+
+  // The web player has no global playback shortcut: Space either scrolls the
+  // page or (after clicking a control) re-activates whatever has focus. Desktop
+  // clients use Space as play/pause, so we take it over — but only when it is
+  // unambiguous:
+  //   * never while typing (search box, rename dialogs, …)
+  //   * never while an interactive control has focus (the browser's own
+  //     Space-activates-focus behaviour is what the user expects there)
+  //   * never before anything has been loaded (keep page scrolling on first run)
+  //   * never with modifiers (Ctrl/Alt/Shift/Space belong to the page)
+  var SPACE_TOGGLES_PLAYBACK = true
+
+  function isTextEntry (el) {
+    try {
+      if (!el) return false
+      var tag = String(el.tagName || '').toUpperCase()
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true
+      if (el.isContentEditable) return true
+      if (el.closest && el.closest('[contenteditable=""],[contenteditable="true"]')) return true
+    } catch (_) {}
+    return false
+  }
+
+  function hasInteractiveFocus (el) {
+    try {
+      if (!el || !el.closest) return false
+      return !!el.closest(
+        'button,[role="button"],a[href],summary,label,[tabindex]:not([tabindex="-1"])'
+      )
+    } catch (_) {
+      return false
+    }
+  }
+
+  function hookSpaceKey () {
+    if (!SPACE_TOGGLES_PLAYBACK) return
+    try {
+      window.addEventListener('keydown', function (event) {
+        try {
+          var isSpace = event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar'
+          if (!isSpace) return
+          if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return
+          if (event.defaultPrevented) return
+          if (event.isComposing) return
+          if (isTextEntry(event.target)) return
+          if (hasInteractiveFocus(event.target)) return
+          var list = allMedia()
+          if (!list.length) return // nothing loaded yet: let Space scroll
+          var el = media || list[0]
+          if (!(el.currentSrc || el.src)) return
+          event.preventDefault()
+          if (event.repeat) return
+          command({ type: 'playpause' })
+        } catch (_) {}
+      }, true)
+    } catch (_) {}
   }
 
   window.addEventListener('message', function (event) {
@@ -505,6 +594,7 @@
   hookMediaSession()
   hookMediaCreation()
   hookTitle()
+  hookSpaceKey()
   setTimeout(function () { scheduleSend(true) }, 1500)
   post('event', { kind: 'hooked', at: hookedAt })
 })()
