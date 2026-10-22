@@ -4,7 +4,7 @@
 > 需求变更：**不使用系统通知**（P1 里的"切歌通知"已移除）；应用名统一为「网易云音乐」；
 > 使用品牌图标（圆形裁切）并安装了 `.desktop` + hicolor 图标；空格键始终切换播放/暂停。
 > **P2 已交付**：AppImage / deb / rpm / pacman 四格式（`tools/build-linux.sh` 一键构建，
-> 构建工具自动下载到 `~/.cache/netcloud-music/pkg-tools`）+ AUR `netcloud-music-bin`（`aur/`）。
+> 构建工具自动下载到 `~/.cache/netcloud-music/pkg-tools`）。
 > 下方 P2–P5 尚未开始。实测结论与实现细节见仓库 `README.md` 与 `docs/findings.md`。
 
 ## 0. 结论与前提
@@ -28,7 +28,7 @@
 | 项 | 内容 |
 |---|---|
 | 包名 / 可执行 | `netcloud-music`，appId `io.github.lxp731.netcloudmusic` |
-| 安装形态 | AppImage + deb + rpm + pacman(tar.zst) + Flatpak manifest + AUR PKGBUILD |
+| 安装形态 | AppImage + deb + rpm + pacman |
 | 体积预期 | ~110 MB（Electron 42，可分架构） |
 | 仓库位置 | `~/workspace/netcloud-music`（当前 `/tmp/netcloud-music` 只是 spike，/tmp 会清） |
 
@@ -103,7 +103,6 @@ KDE(Wayland) 与 GNOME 的媒体键都走 **MPRIS**，因此主路径是 MPRIS�
 ### P2 打包与分发（1 天）
 - electron-builder：AppImage / deb / rpm / pacman；`.desktop` 带 `StartupWMClass`
 - Flatpak manifest（network + pulseaudio + wayland/x11 + dri）
-- AUR `PKGBUILD`（`-bin` 型，指向 GitHub Release）
 - electron-updater（仅 AppImage）
 - 验收：干净环境 `--appimage-extract-and-run` 能起，deb 在容器里能装
 

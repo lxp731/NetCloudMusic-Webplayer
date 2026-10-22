@@ -66,8 +66,8 @@ rpm:
 
 pacman:
   artifactName: ${name}-${version}-${arch}.${ext}
-  # Arch 官方仓库没有 libappindicator-gtk3（AUR 才有），用官方库的
-  # libayatana-appindicator；ffmpeg 由 Electron 自带，去掉。
+  # Arch 官方仓库没有 libappindicator-gtk3，用官方库的 libayatana-appindicator；
+  # ffmpeg 由 Electron 自带，去掉。
   depends:
     - c-ares
     - gtk3
