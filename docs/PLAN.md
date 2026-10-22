@@ -1,5 +1,8 @@
 # netcloud-music — 把 `music.163.com/st/webplayer` 包成真正的 Linux 桌面应用
 
+> **实施状态（2026-10-22）**：P0 + P1 已完成并实测通过（仓库 `~/workspace/netcloud-music`）。
+> 下方 P2–P5 尚未开始。实测结论与实现细节见仓库 `README.md` 与 `docs/findings.md`。
+
 ## 0. 结论与前提
 
 网易云 PC 客户端本身就是「原生壳 + `st/webplayer` 这同一个 H5 + jsbridge」的三层结构（bundle 里
