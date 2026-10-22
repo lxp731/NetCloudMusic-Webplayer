@@ -3,6 +3,7 @@
 const path = require('node:path')
 const { app, Tray, Menu, nativeImage } = require('electron')
 
+const { PRODUCT_NAME } = require('../shared/config')
 const log = require('./logger')
 
 const ICON = path.join(__dirname, '..', '..', 'build', 'tray.png')
@@ -26,7 +27,7 @@ module.exports = function createTray ({ store, onCommand, onShow, onQuit }) {
     return null
   }
 
-  tray.setToolTip('NetCloud Music')
+  tray.setToolTip(PRODUCT_NAME)
 
   const build = () => {
     const s = store.state

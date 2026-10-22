@@ -4,7 +4,8 @@
 // by tooling and tests.
 
 const APP_NAME = 'netcloud-music' // used for paths (no spaces)
-const PRODUCT_NAME = 'NetCloud Music'
+const PRODUCT_NAME = '网易云音乐' // shown in the window title, tray, MPRIS, menus
+const LEGACY_DIR_NAME = 'NetCloud Music' // pre-rename userData dir, migrated once
 const APP_ID = 'io.github.lxp731.netcloudmusic'
 const DESKTOP_ENTRY = 'netcloud-music'
 
@@ -51,6 +52,7 @@ function isAllowedUrl (url) {
 module.exports = {
   APP_NAME,
   PRODUCT_NAME,
+  LEGACY_DIR_NAME,
   APP_ID,
   DESKTOP_ENTRY,
   MPRIS_NAME,

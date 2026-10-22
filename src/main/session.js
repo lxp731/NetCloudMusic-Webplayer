@@ -19,9 +19,9 @@ function setupSession ({ proxy } = {}) {
   // only light up for a plain Chrome UA.
   sess.setUserAgent(USER_AGENT, 'zh-CN,zh;q=0.9,en;q=0.8')
 
-  // Deny by default. The page asks for notifications (song change) and
-  // microphone (听歌识曲); everything else has no business here.
-  const allowed = new Set(['notifications', 'media', 'clipboard-sanitized-write'])
+  // Deny by default. Only the microphone (听歌识曲 / 音效预览) is ever useful;
+  // the shell deliberately does not use system notifications.
+  const allowed = new Set(['media', 'clipboard-sanitized-write'])
   sess.setPermissionRequestHandler((_wc, permission, callback) => {
     const grant = allowed.has(permission)
     log.debug('[session] permission', permission, grant ? 'granted' : 'denied')

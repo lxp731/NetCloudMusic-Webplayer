@@ -4,12 +4,13 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { app, BrowserWindow, shell } = require('electron')
 
-const { PARTITION, PLAYER_URL, USER_AGENT, isAllowedUrl } = require('../shared/config')
+const { PARTITION, PLAYER_URL, USER_AGENT, PRODUCT_NAME, isAllowedUrl } = require('../shared/config')
 const log = require('./logger')
 
 const HOOK_PATH = path.join(__dirname, '..', 'preload', 'page-hook.js')
 const PRELOAD_PATH = path.join(__dirname, '..', 'preload', 'index.js')
 const ERROR_PAGE = path.join(__dirname, '..', 'renderer', 'error.html')
+const APP_ICON = path.join(__dirname, '..', '..', 'build', 'icon-256.png')
 
 const DEFAULTS = { width: 1280, height: 820 }
 
@@ -71,7 +72,8 @@ function createMainWindow () {
     y: state.y,
     minWidth: 900,
     minHeight: 600,
-    title: 'NetCloud Music',
+    title: PRODUCT_NAME,
+    icon: APP_ICON,
     backgroundColor: '#000000',
     autoHideMenuBar: true,
     show: false,
@@ -94,7 +96,7 @@ function createMainWindow () {
 
   win.once('ready-to-show', () => {
     win.show()
-    log.info('[window] shown')
+    log.info('[window] shown title=' + JSON.stringify(win.getTitle()))
   })
 
   win.on('resize', scheduleSave)
@@ -173,9 +175,9 @@ function createMainWindow () {
   win.webContents.on('did-navigate', (_e, url) => log.info('[window] navigate:', url))
   win.webContents.on('did-navigate-in-page', (_e, url) => log.info('[window] in-page:', url))
 
-  win.webContents.on('page-title-updated', (_e, title) => {
-    win.setTitle(title && title !== '网易云音乐' ? `${title} · NetCloud Music` : 'NetCloud Music')
-  })
+  // The window/taskbar label stays the app name; the current track is surfaced
+  // through MPRIS and the tray instead of mutating the title.
+  win.on('page-title-updated', (event) => event.preventDefault())
 
   return win
 }

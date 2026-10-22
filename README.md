@@ -1,6 +1,8 @@
-# NetCloud Music
+# 网易云音乐（Linux 桌面外壳）
 
-网易云音乐网页版（`music.163.com/st/webplayer`）的 Linux 桌面外壳。
+网易云音乐网页版（`music.163.com/st/webplayer`）的 Linux 桌面外壳。非官方项目；
+应用名、窗口标题、托盘与 MPRIS 标识统一显示为「网易云音乐」，图标取自网络上的
+网易云品牌图标（仅用于本地桌面识别）。
 
 不是重写客户端，也不改任何业务逻辑：**Electron 壳 + 官方网页版 + 自实现 MPRIS/托盘/通知**，
 和 Spotify 桌面端「CEF 壳 + 同一个 web UI + 原生桥」是同一种结构，只是我们用的是 Electron。
@@ -8,7 +10,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  native shell (Electron main, Node)                          │
-│   窗口/单实例/窗口状态   MPRIS2 (dbus-next)   Tray   通知       │
+│   窗口/单实例/窗口状态   MPRIS2 (dbus-next)   Tray           │
 │                     ▲             │                          │
 │            media:state│            │shell:command             │
 │                     │             ▼                          │
@@ -29,7 +31,7 @@ P0 + P1 已实现并在 KDE Plasma(Wayland) / Electron 42 上实测：
   方法 `PlayPause / Play / Pause / Next / Previous / Seek / SetPosition`，属性变化会发 `PropertiesChanged`
   → KDE/GNOME 的键盘媒体键、耳机按键、锁屏播放器、`playerctl` 全部可用
 - 托盘图标 + 播放/暂停/上一首/下一首/显示/退出；关窗进托盘（无托盘时关窗即退出）
-- 切歌桌面通知（封面自动下载缓存）
+- 切歌**不发**系统通知（按需求关闭；MPRIS 元数据已包含曲目信息）
 - 单实例；第二次启动会唤起已有窗口
 - 窗口位置/尺寸/最大化持久化
 - 本地错误页（断网/加载失败可重试）
@@ -50,6 +52,7 @@ $ busctl --user call ... Seek x 30000000 → Position 前进 30s
 
 ```bash
 pnpm install
+./bin/netcloud-music          # 等同下面那条（.desktop 里用的也是它）
 ./tools/dev-run.sh            # 用当前桌面会话启动（注入 DISPLAY/XAUTHORITY/DBUS）
 ./tools/dev-run.sh --dev      # 同上，另开 DevTools 菜单项
 NETCLOUD_MUTE=1 ./tools/dev-run.sh   # 静音启动，方便自动化测试
@@ -63,6 +66,16 @@ kill -USR2 <main-pid>   # 开关 DevTools
 ```
 
 日志：`~/.config/netcloud-music/logs/netcloud-music.log`（`NETCLOUD_VERBOSE=1` 打开 debug 级）。
+
+桌面集成（开发期已装好，P2 打包时会换成正式安装）：
+
+```bash
+~/.local/share/applications/netcloud-music.desktop      # Name=网易云音乐, Exec→仓库 bin/netcloud-music
+~/.local/share/icons/hicolor/*/apps/netcloud-music.png  # 32–512px 品牌图标
+# 验证窗口属性
+WAYLAND_DEBUG=client ./tools/dev-run.sh 2>&1 | grep -E 'set_app_id|set_title'
+#   → set_app_id("netcloud-music") / set_title("网易云音乐")
+```
 
 ## 它是怎么拿到播放状态的
 

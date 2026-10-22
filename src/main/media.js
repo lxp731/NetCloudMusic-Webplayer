@@ -4,7 +4,7 @@ const { EventEmitter } = require('node:events')
 const crypto = require('node:crypto')
 
 // Single source of truth for "what is playing". Fed by the page hook through
-// IPC, consumed by MPRIS, the tray and notifications.
+// IPC, consumed by MPRIS and the tray.
 //
 // The page only reports the position every ~250ms (timeupdate). Between those
 // reports we extrapolate locally so MPRIS clients see a smooth Position.

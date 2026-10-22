@@ -11,7 +11,6 @@ const { MprisService } = require('./mpris')
 const sessionSetup = require('./session')
 const windows = require('./window')
 const createTray = require('./tray')
-const createNotifier = require('./notify')
 const buildMenu = require('./menu')
 
 const argv = process.argv.slice(1)
@@ -21,7 +20,6 @@ const probeMode = argv.includes('--probe')
 const store = new MediaStore()
 let mpris = null
 let tray = null
-let notifier = null
 
 // A second launch focuses the running window instead of starting a new player.
 if (!app.requestSingleInstanceLock()) {
@@ -31,6 +29,9 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 function bootstrap () {
+  // Make the window's WM_CLASS / Wayland app_id match the .desktop file so the
+  // taskbar picks up our icon and the entry instead of a generic Electron one.
+  app.commandLine.appendSwitch('class', config.APP_NAME)
   configurePaths()
   app.setName(config.APP_NAME)
   if (process.platform === 'linux') {
@@ -85,9 +86,6 @@ async function onReady () {
   windows.setTrayAvailable(!!tray)
   log.info('[tray] ' + (tray ? 'created' : 'unavailable (close will quit the app)'))
 
-  // Notifications
-  notifier = createNotifier({ store })
-
   // Menu
   buildMenu({
     isDev,
@@ -105,7 +103,6 @@ async function onReady () {
   })
   store.on('track', (state) => {
     log.info('[media] track:', state.title, '—', state.artist, '(' + state.source + ')')
-    if (notifier) notifier(state).catch(() => {})
   })
 
   if (probeMode) {
@@ -160,7 +157,7 @@ function sendCommand (cmd) {
 // existing login survives the change.
 function configurePaths () {
   const target = path.join(app.getPath('appData'), config.APP_NAME)
-  const legacy = path.join(app.getPath('appData'), config.PRODUCT_NAME)
+  const legacy = path.join(app.getPath('appData'), config.LEGACY_DIR_NAME)
   try {
     if (!fs.existsSync(target) && fs.existsSync(legacy)) {
       fs.renameSync(legacy, target)
