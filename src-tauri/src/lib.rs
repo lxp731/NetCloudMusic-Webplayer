@@ -9,6 +9,7 @@ mod config;
 mod logger;
 mod media;
 mod menu;
+#[cfg(target_os = "linux")]
 mod mpris;
 mod tray;
 mod window;
@@ -22,6 +23,7 @@ use media::MediaStore;
 /// Shared application state, managed by Tauri.
 struct AppState {
     store: Arc<MediaStore>,
+    #[cfg(target_os = "linux")]
     mpris: Option<mpris::MprisService>,
     tray: Option<tray::Tray>,
 }
@@ -46,6 +48,7 @@ fn media_state(state: tauri::State<'_, AppState>, payload: serde_json::Value) {
         let s = store.snapshot();
         log::info!("[media] track: {} — {} ({})", s.title, s.artist, s.source);
     }
+    #[cfg(target_os = "linux")]
     if let Some(mpris) = &state.mpris {
         mpris.sync(&store, &result.changed);
     }
@@ -89,6 +92,7 @@ fn shell_info(app: tauri::AppHandle, state: tauri::State<'_, AppState>) -> serde
 /// gst-plugins-good); when the system package is missing we point GStreamer at a
 /// user-local copy (installed by tools/setup-gst.sh) so playback works without
 /// root. Must run before the webview (and thus GStreamer) initializes.
+#[cfg(target_os = "linux")]
 fn ensure_audio_plugins() {
     if std::env::var_os("GST_PLUGIN_PATH").is_some() {
         return; // already configured externally
@@ -121,6 +125,7 @@ fn ensure_audio_plugins() {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     logger::init();
+    #[cfg(target_os = "linux")]
     ensure_audio_plugins();
 
     tauri::Builder::default()
@@ -147,20 +152,23 @@ pub fn run() {
             let win = window::create_window(app.handle())?;
             log::info!("[window] created, loading {}", config::player_url());
 
-            // MPRIS (needs an async context; Tauri's runtime is tokio).
-            let store_for_mpris = store.clone();
-            let app_for_mpris = app.handle().clone();
-            let mpris = tauri::async_runtime::block_on(async move {
-                mpris::MprisService::start(store_for_mpris, app_for_mpris).await
-            });
-            let mpris = match mpris {
-                Ok(m) => {
-                    log::info!("[mpris] exported org.mpris.MediaPlayer2.{}", config::MPRIS_SUFFIX);
-                    Some(m)
-                }
-                Err(e) => {
-                    log::error!("[mpris] failed to start: {e}");
-                    None
+            // MPRIS（仅 Linux；Windows/macOS 无 D-Bus，媒体键功能降级）
+            #[cfg(target_os = "linux")]
+            let mpris = {
+                let store_for_mpris = store.clone();
+                let app_for_mpris = app.handle().clone();
+                let mpris = tauri::async_runtime::block_on(async move {
+                    mpris::MprisService::start(store_for_mpris, app_for_mpris).await
+                });
+                match mpris {
+                    Ok(m) => {
+                        log::info!("[mpris] exported org.mpris.MediaPlayer2.{}", config::MPRIS_SUFFIX);
+                        Some(m)
+                    }
+                    Err(e) => {
+                        log::error!("[mpris] failed to start: {e}");
+                        None
+                    }
                 }
             };
 
@@ -188,7 +196,10 @@ pub fn run() {
                 log::warn!("[menu] failed: {e}");
             }
 
+            #[cfg(target_os = "linux")]
             app.manage(AppState { store, mpris, tray });
+            #[cfg(not(target_os = "linux"))]
+            app.manage(AppState { store, tray });
 
             // The window reference is kept alive by Tauri's window manager; we
             // only need the handle for logs/dev tools.

@@ -85,9 +85,23 @@ pub fn save_state(app: &AppHandle) {
     }
 }
 
+/// Open a URL in the system default browser (per-platform).
+#[cfg(target_os = "linux")]
 fn open_external(url: &str) {
     // xdg-open detaches and routes to the right handler on any desktop.
     let _ = std::process::Command::new("xdg-open").arg(url).spawn();
+}
+
+#[cfg(target_os = "macos")]
+fn open_external(url: &str) {
+    let _ = std::process::Command::new("open").arg(url).spawn();
+}
+
+#[cfg(target_os = "windows")]
+fn open_external(url: &str) {
+    let _ = std::process::Command::new("cmd")
+        .args(["/c", "start", "", url])
+        .spawn();
 }
 
 pub fn create_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
