@@ -85,9 +85,43 @@ fn shell_info(app: tauri::AppHandle, state: tauri::State<'_, AppState>) -> serde
 
 // --------------------------------------------------------------------- setup
 
+/// Ensure WebKitGTK can build an audio pipeline. It needs `autoaudiosink` (from
+/// gst-plugins-good); when the system package is missing we point GStreamer at a
+/// user-local copy (installed by tools/setup-gst.sh) so playback works without
+/// root. Must run before the webview (and thus GStreamer) initializes.
+fn ensure_audio_plugins() {
+    if std::env::var_os("GST_PLUGIN_PATH").is_some() {
+        return; // already configured externally
+    }
+    let has_auto = std::process::Command::new("gst-inspect-1.0")
+        .arg("autoaudiosink")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    if has_auto {
+        return;
+    }
+    let home = std::env::var("HOME").unwrap_or_default();
+    let gst_lib =
+        format!("{home}/.local/share/netcloud-music/gst-plugins/usr/lib/gstreamer-1.0");
+    if std::path::Path::new(&gst_lib).exists() {
+        std::env::set_var("GST_PLUGIN_PATH", &gst_lib);
+        log::info!(
+            "[audio] autoaudiosink missing system-wide; using local plugins at {gst_lib}"
+        );
+    } else {
+        log::warn!(
+            "[audio] autoaudiosink not found — install gst-plugins-good (or run tools/setup-gst.sh)"
+        );
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     logger::init();
+    ensure_audio_plugins();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
