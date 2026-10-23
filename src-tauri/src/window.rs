@@ -49,13 +49,27 @@ fn state_path(app: &AppHandle) -> Option<std::path::PathBuf> {
 }
 
 fn load_state(app: &AppHandle) -> WindowState {
-    let Some(path) = state_path(app) else {
-        return WindowState::default();
+    let mut state = match state_path(app).and_then(|p| std::fs::read_to_string(p).ok()) {
+        Some(raw) => serde_json::from_str(&raw).unwrap_or_default(),
+        None => WindowState::default(),
     };
-    match std::fs::read_to_string(&path) {
-        Ok(raw) => serde_json::from_str(&raw).unwrap_or_default(),
-        Err(_) => WindowState::default(),
+    // Guard against corrupt/stale values (e.g. physical pixels saved as logical
+    // by an older build): never restore a window larger than the screen.
+    if let Ok(Some(monitor)) = app.primary_monitor() {
+        let scale = monitor.scale_factor();
+        let screen = monitor.size().to_logical::<f64>(scale);
+        if state.width > screen.width + 64.0 || state.height > screen.height + 64.0 {
+            log::warn!(
+                "[window] saved size {}x{} exceeds screen {}x{}, resetting to default",
+                state.width,
+                state.height,
+                screen.width,
+                screen.height
+            );
+            state = WindowState::default();
+        }
     }
+    state
 }
 
 pub fn save_state(app: &AppHandle) {
@@ -159,23 +173,30 @@ pub fn create_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
             }
             E::Resized(size) => {
                 // Track the *normal* (unmaximized) size only, so restoring after
-                // a maximized session keeps the last normal geometry.
+                // a maximized session keeps the last normal geometry. The event
+                // reports physical pixels; store logical pixels instead.
                 if let Some(w) = app_for_events.get_webview_window("main") {
                     if !w.is_maximized().unwrap_or(false) {
+                        let scale = w.scale_factor().unwrap_or(1.0);
+                        let logical = size.to_logical::<f64>(scale);
                         if let Ok(mut g) = NORMAL_BOUNDS.lock() {
                             if let Some(s) = g.as_mut() {
-                                s.width = size.width as f64;
-                                s.height = size.height as f64;
+                                s.width = logical.width;
+                                s.height = logical.height;
                             }
                         }
                     }
                 }
             }
             E::Moved(pos) => {
-                if let Ok(mut g) = NORMAL_BOUNDS.lock() {
-                    if let Some(s) = g.as_mut() {
-                        s.x = pos.x as f64;
-                        s.y = pos.y as f64;
+                if let Some(w) = app_for_events.get_webview_window("main") {
+                    let scale = w.scale_factor().unwrap_or(1.0);
+                    let logical = pos.to_logical::<f64>(scale);
+                    if let Ok(mut g) = NORMAL_BOUNDS.lock() {
+                        if let Some(s) = g.as_mut() {
+                            s.x = logical.x;
+                            s.y = logical.y;
+                        }
                     }
                 }
             }
