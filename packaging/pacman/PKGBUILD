@@ -1,0 +1,36 @@
+# Maintainer: netcloud-music contributors <lxp731@users.noreply.github.com>
+# Tauri (Rust + WebKitGTK) shell for the NetEase Cloud Music web player.
+# Built by tools/build-pacman-tauri.sh, which copies the release binary,
+# .desktop file and icon next to this PKGBUILD before running makepkg.
+
+pkgname=netcloud-music-tauri
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="网易云音乐网页版的 Linux 桌面外壳（Tauri/WebKitGTK 版）"
+arch=('x86_64')
+url="https://github.com/lxp731/NetCloudMusic-Webplayer"
+license=('MIT')
+depends=(
+  'webkit2gtk-4.1'
+  'gtk3'
+  'libayatana-appindicator'
+  'gst-plugins-good'
+  'gst-plugins-base-libs'
+  'gst-libav'
+  'gst-plugin-pipewire'
+  'hicolor-icon-theme'
+  'xdg-utils'
+)
+conflicts=('netcloud-music')
+provides=('netcloud-music')
+source=("netcloud-music" "netcloud-music.desktop" "netcloud-music.png")
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+
+package() {
+  install -Dm755 "$srcdir/netcloud-music" \
+    "$pkgdir/usr/bin/netcloud-music"
+  install -Dm644 "$srcdir/netcloud-music.desktop" \
+    "$pkgdir/usr/share/applications/netcloud-music.desktop"
+  install -Dm644 "$srcdir/netcloud-music.png" \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/netcloud-music.png"
+}
