@@ -21,6 +21,12 @@ Tauri（Rust + 系统 WebKitGTK），而不是 Electron（自带 Chromium）。
 └──────────────────────────────────────────────────────────────┘
 ```
 
+## 效果图
+
+![index.png](./assets/index.png)
+![playlist.png](./assets/playlist.png)
+![player.png](./assets/player.png)
+
 ## 状态
 
 已完成并实测（KDE Plasma Wayland / webkit2gtk-4.1 2.54 / Tauri 2.12）：
