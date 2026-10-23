@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{
     AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
 };
+use tauri::webview::NewWindowResponse;
 use tauri::window::Color;
 
 use crate::config;
@@ -83,6 +84,7 @@ pub fn create_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
             .unwrap_or_else(|e| panic!("invalid NETCLOUD_URL ({url}): {e}")),
     );
 
+    let app_for_new_window = app.clone();
     let builder = WebviewWindowBuilder::new(app, "main", external)
         .title(config::PRODUCT_NAME)
         .inner_size(state.width, state.height)
@@ -101,6 +103,20 @@ pub fn create_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
                 open_external(s);
                 false
             }
+        })
+        .on_new_window(move |url, _features| {
+            // Never open a second window for site content: same-site popups are
+            // navigations in disguise, anything else goes to the system browser.
+            let s = url.as_str();
+            if config::is_allowed_url(s) {
+                if let Some(w) = app_for_new_window.get_webview_window("main") {
+                    let _ = w.navigate(url);
+                }
+            } else {
+                log::info!("[window] external new window blocked: {s}");
+                open_external(s);
+            }
+            NewWindowResponse::Deny
         })
         .on_page_load(|_window, payload| {
             log::info!(
