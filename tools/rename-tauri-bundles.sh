@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 重命名 Tauri 打包产物，加 "-tauri" 标记以区分 Electron 版产物。
+# 重命名 Tauri 打包产物为统一的 netcloud-music-<version>-<arch>.<ext>。
 #
 # Tauri 的 bundler 不支持自定义 artifactName（产物名固定为
 # netcloud-music_<version>_<arch>.{deb,AppImage} / netcloud-music-<version>-<release>.<arch>.rpm），
-# 所以打包后统一重命名为 netcloud-music-<version>-tauri-<arch>.<ext>。
+# 所以打包后统一重命名为连字符风格。
 #
 # 用法：tauri build 之后运行  tools/rename-tauri-bundles.sh
 set -euo pipefail
@@ -23,25 +23,25 @@ ren() {
 
 echo ">> 重命名 Tauri 产物（version=$VERSION）"
 
-# deb:  netcloud-music_0.1.0_amd64.deb        → netcloud-music-0.1.0-tauri-amd64.deb
+# deb:  netcloud-music_0.1.0_amd64.deb        → netcloud-music-0.1.0-amd64.deb
 for f in "$BUNDLE"/deb/*.deb; do
   [ -f "$f" ] || continue
   arch="$(basename "$f" | sed -E "s/${NAME}_${VERSION}_([^.]+)\.deb/\1/")"
-  ren "$f" "$(dirname "$f")/${NAME}-${VERSION}-tauri-${arch}.deb"
+  ren "$f" "$(dirname "$f")/${NAME}-${VERSION}-${arch}.deb"
 done
 
-# rpm:  netcloud-music-0.1.0-1.x86_64.rpm     → netcloud-music-0.1.0-tauri-x86_64.rpm
+# rpm:  netcloud-music-0.1.0-1.x86_64.rpm     → netcloud-music-0.1.0-x86_64.rpm
 for f in "$BUNDLE"/rpm/*.rpm; do
   [ -f "$f" ] || continue
   arch="$(basename "$f" | sed -E "s/${NAME}-${VERSION}-[0-9]+\.([^.]+)\.rpm/\1/")"
-  ren "$f" "$(dirname "$f")/${NAME}-${VERSION}-tauri-${arch}.rpm"
+  ren "$f" "$(dirname "$f")/${NAME}-${VERSION}-${arch}.rpm"
 done
 
-# appimage: netcloud-music_0.1.0_x86_64.AppImage → netcloud-music-0.1.0-tauri-x86_64.AppImage
+# appimage: netcloud-music_0.1.0_x86_64.AppImage → netcloud-music-0.1.0-x86_64.AppImage
 for f in "$BUNDLE"/appimage/*.AppImage; do
   [ -f "$f" ] || continue
   arch="$(basename "$f" | sed -E "s/${NAME}_${VERSION}_([^.]+)\.AppImage/\1/")"
-  ren "$f" "$(dirname "$f")/${NAME}-${VERSION}-tauri-${arch}.AppImage"
+  ren "$f" "$(dirname "$f")/${NAME}-${VERSION}-${arch}.AppImage"
 done
 
 echo ">> 完成"

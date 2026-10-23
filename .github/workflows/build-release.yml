@@ -63,22 +63,22 @@ jobs:
           name: linux-packages
           if-no-files-found: error
           path: |
-            src-tauri/target/release/bundle/deb/*-tauri-*.deb
-            src-tauri/target/release/bundle/rpm/*-tauri-*.rpm
-            src-tauri/target/release/bundle/appimage/*-tauri-*.AppImage
+            src-tauri/target/release/bundle/deb/netcloud-music-*.deb
+            src-tauri/target/release/bundle/rpm/netcloud-music-*.rpm
+            src-tauri/target/release/bundle/appimage/netcloud-music-*.AppImage
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            src-tauri/target/release/bundle/deb/*-tauri-*.deb
-            src-tauri/target/release/bundle/rpm/*-tauri-*.rpm
-            src-tauri/target/release/bundle/appimage/*-tauri-*.AppImage
+            src-tauri/target/release/bundle/deb/netcloud-music-*.deb
+            src-tauri/target/release/bundle/rpm/netcloud-music-*.rpm
+            src-tauri/target/release/bundle/appimage/netcloud-music-*.AppImage
           generate_release_notes: true
 
   build-pacman:
-    # makepkg 是 Arch 工具，用 Arch 容器跑（产物 netcloud-music-<ver>-tauri-x64.pacman）。
+    # makepkg 是 Arch 工具，用 Arch 容器跑（产物 netcloud-music-<ver>-x64.pacman）。
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:

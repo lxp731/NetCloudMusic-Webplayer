@@ -41,13 +41,13 @@ Tauri（Rust + 系统 WebKitGTK），而不是 Electron（自带 Chromium）。
 ./tools/build-pacman-tauri.sh             # pacman（PKGBUILD + makepkg）
 ```
 
-产物在 `dist/`（统一带 `-tauri` 标记，区分 Electron 版的 `-electron`）：
+产物在 `dist/`：
 
 ```
-netcloud-music-0.1.0-tauri-amd64.deb
-netcloud-music-0.1.0-tauri-x86_64.rpm
-netcloud-music-0.1.0-tauri-amd64.AppImage
-netcloud-music-0.1.0-tauri-x64.pacman
+netcloud-music-0.1.0-amd64.deb
+netcloud-music-0.1.0-x86_64.rpm
+netcloud-music-0.1.0-amd64.AppImage
+netcloud-music-0.1.0-x64.pacman
 ```
 
 deb/rpm 构建工具（dpkg-deb/rpmbuild）缺失时脚本会自动用 pacman 下载（无需 root）。

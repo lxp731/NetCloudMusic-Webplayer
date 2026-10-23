@@ -95,7 +95,7 @@ Rust 壳 (src-tauri/src/*)
   `AudioVideo;Audio;Music`）。用 `AudioVideo` 会报 `invalid category`。
 - **产物命名**：Tauri bundler 不支持自定义 artifactName，产物名固定
   `netcloud-music_<ver>_<arch>.{deb,AppImage}` / `netcloud-music-<ver>-<release>.<arch>.rpm`。
-  `tools/rename-tauri-bundles.sh` 统一重命名为 `netcloud-music-<ver>-tauri-<arch>.<ext>`。
+  `tools/rename-tauri-bundles.sh` 统一重命名为 `netcloud-music-<ver>-<arch>.<ext>`。
 - **pacman**：Tauri bundler 无 pacman target，走 `packaging/pacman/PKGBUILD`
   （`tools/build-pacman-tauri.sh`）。pkgname `netcloud-music-tauri`，
   `conflicts=('netmusic-webplayer-bin' 'netcloud-music')`，`provides=('netcloud-music')`。
@@ -119,8 +119,8 @@ Rust 壳 (src-tauri/src/*)
 ./tools/build-pacman-tauri.sh         # pacman（PKGBUILD + makepkg）
 ```
 
-产物在 `dist/` 和 `src-tauri/target/release/bundle/`，统一 `-tauri` 标记：
-`netcloud-music-<ver>-tauri-{amd64,x86_64,x64}.{deb,rpm,AppImage,pacman}`。
+产物在 `dist/` 和 `src-tauri/target/release/bundle/`，统一命名：
+`netcloud-music-<ver>-{amd64,x86_64,x64}.{deb,rpm,AppImage,pacman}`。
 
 版本号唯一来源：`src-tauri/Cargo.toml` 的 `version`（tauri.conf.json 和 CI 都从这读）。
 
