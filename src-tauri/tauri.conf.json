@@ -17,7 +17,7 @@
     "active": true,
     "targets": ["deb", "rpm", "appimage"],
     "category": "AudioVideo",
-    "shortDescription": "网易云音乐网页版的 Linux 桌面外壳",
+    "shortDescription": "网易云音乐网页版的 Linux 桌面应用",
     "longDescription": "网易云音乐网页版（music.163.com/st/webplayer）的非官方 Linux 桌面外壳，提供系统托盘、MPRIS 与媒体键等桌面集成。",
     "icon": [
       "icons/32x32.png",

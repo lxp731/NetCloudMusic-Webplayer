@@ -40,7 +40,7 @@ linux:
   category: AudioVideo
   maintainer: lxp731 <lxp731@users.noreply.github.com>
   vendor: netcloud-music contributors
-  synopsis: 网易云音乐网页版的 Linux 桌面外壳
+  synopsis: 网易云音乐网页版的 Linux 桌面应用
   description: 网易云音乐网页版（music.163.com/st/webplayer）的非官方 Linux 桌面外壳，提供系统托盘、MPRIS 与媒体键等桌面集成。
   mimeTypes:
     - x-scheme-handler/orpheus
@@ -50,22 +50,22 @@ linux:
       Name: 网易云音乐
       Name[zh_CN]: 网易云音乐
       GenericName: 音乐播放器
-      Comment: 网易云音乐网页版的 Linux 桌面外壳
+      Comment: 网易云音乐网页版的 Linux 桌面应用
       Keywords: music;netease;cloud;音乐;网易云;
   syncDesktopName: true
 
 appImage:
-  artifactName: ${name}-${version}-${arch}.${ext}
+  artifactName: ${name}-${version}-electron-${arch}.${ext}
 
 deb:
-  artifactName: ${name}_${version}_${arch}.${ext}
+  artifactName: ${name}-${version}-electron-${arch}.${ext}
   packageCategory: sound
 
 rpm:
-  artifactName: ${name}-${version}.${arch}.${ext}
+  artifactName: ${name}-${version}-electron-${arch}.${ext}
 
 pacman:
-  artifactName: ${name}-${version}-${arch}.${ext}
+  artifactName: ${name}-${version}-electron-${arch}.${ext}
   # Arch 官方仓库没有 libappindicator-gtk3，用官方库的 libayatana-appindicator；
   # ffmpeg 由 Electron 自带，去掉。
   depends:
