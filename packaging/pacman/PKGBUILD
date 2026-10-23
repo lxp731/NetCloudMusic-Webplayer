@@ -3,7 +3,7 @@
 # Built by tools/build-pacman-tauri.sh, which copies the release binary,
 # .desktop file and icon next to this PKGBUILD before running makepkg.
 
-pkgname=netcloud-music-tauri
+pkgname=netmusic-webplayer-bin
 pkgver=0.1.0
 pkgrel=1
 pkgdesc="网易云音乐网页版的 Linux 桌面应用（Tauri/WebKitGTK 版）"
@@ -21,8 +21,8 @@ depends=(
   'hicolor-icon-theme'
   'xdg-utils'
 )
-conflicts=('netmusic-webplayer-bin' 'netcloud-music')
-provides=('netcloud-music')
+conflicts=('netmusic-webplayer' 'netcloud-music' 'netcloud-music-tauri')
+provides=('netmusic-webplayer')
 source=("netcloud-music" "netcloud-music.desktop" "netcloud-music.png")
 sha256sums=('SKIP' 'SKIP' 'SKIP')
 

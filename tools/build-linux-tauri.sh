@@ -78,4 +78,4 @@ ls -la src-tauri/target/release/bundle/deb/*.deb \
        src-tauri/target/release/bundle/appimage/*.AppImage 2>/dev/null || true
 echo
 echo ">> sha256:"
-(cd src-tauri/target/release/bundle && sha256sum deb/netcloud-music-* rpm/netcloud-music-* appimage/netcloud-music-* 2>/dev/null) || true
+(cd src-tauri/target/release/bundle && sha256sum deb/netmusic-webplayer-* rpm/netmusic-webplayer-* appimage/netmusic-webplayer-* 2>/dev/null) || true
