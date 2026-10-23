@@ -35,13 +35,7 @@ Tauri（Rust + 系统 WebKitGTK），而不是 Electron（自带 Chromium）。
 
 ## 构建与分发
 
-```bash
-./tools/build-linux-tauri.sh              # deb + rpm + AppImage
-./tools/build-linux-tauri.sh deb rpm      # 只出指定目标
-./tools/build-pacman-tauri.sh             # pacman（PKGBUILD + makepkg）
-```
-
-产物在 `dist/`：
+产物（4 种格式）：
 
 ```
 netmusic-webplayer-0.1.0-amd64.deb
@@ -50,13 +44,83 @@ netmusic-webplayer-0.1.0-amd64.AppImage
 netmusic-webplayer-0.1.0-x64.pacman
 ```
 
-deb/rpm 构建工具（dpkg-deb/rpmbuild）缺失时脚本会自动用 pacman 下载（无需 root）。
+安装预编译包时，运行时依赖（webkit2gtk、gst-plugins-good 等）由包管理器自动解析，
+**无需手动装**。下面按发行版说明「安装预编译包 / 从源码构建 / 安装依赖」三条路。
 
-### 系统依赖
+### Arch Linux
 
-运行时需要（deb/rpm/pacman 已声明）：`webkit2gtk-4.1`、`gst-plugins-good`（音频输出，
-**必需**）、`gst-libav`（解码）、`gst-plugin-pipewire`、`libayatana-appindicator`、`gtk3`。
-无 root 环境可用 `tools/setup-gst.sh` 兜底。
+```bash
+# 安装（依赖自动解决）
+sudo pacman -U netmusic-webplayer-<ver>-x64.pacman
+
+# 从源码构建：先装构建依赖
+sudo pacman -S --needed rust base-devel nodejs pnpm \
+  webkit2gtk-4.1 libayatana-appindicator \
+  gst-plugins-good gst-plugins-base-libs gst-libav gst-plugin-pipewire
+
+# 构建 pacman 包（makepkg）
+./tools/build-pacman-tauri.sh
+# 或构建 deb/rpm/AppImage（脚本会自动下载 dpkg/rpm 工具）
+./tools/build-linux-tauri.sh
+```
+
+### Debian / Ubuntu
+
+```bash
+# 安装（依赖自动解决）
+sudo apt install ./netmusic-webplayer-<ver>-amd64.deb
+
+# 从源码构建：先装构建依赖
+sudo apt install -y \
+  libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+  build-essential curl wget file libssl-dev \
+  gstreamer1.0-plugins-good gstreamer1.0-plugins-base gstreamer1.0-libav gstreamer1.0-pipewire \
+  rpm libarchive-tools
+# 另需 rust（rustup）与 nodejs/pnpm
+
+# 构建 deb/rpm/AppImage
+./tools/build-linux-tauri.sh
+```
+
+### Fedora / RHEL
+
+```bash
+# 安装（依赖自动解决）
+sudo dnf install ./netmusic-webplayer-<ver>-x86_64.rpm
+
+# 从源码构建：先装构建依赖
+sudo dnf install -y \
+  webkit2gtk4.1-devel libayatana-appindicator-devel librsvg2-devel \
+  gcc gcc-c++ curl wget file openssl-devel \
+  gstreamer1-plugins-good gstreamer1-plugins-base gstreamer1-libav gstreamer1-plugin-pipewire \
+  rpm-build
+# 另需 rust 与 nodejs/pnpm
+
+# 构建 deb/rpm/AppImage
+./tools/build-linux-tauri.sh
+```
+
+### 其他发行版（AppImage）
+
+AppImage 自包含运行时，无需安装：
+
+```bash
+chmod +x netmusic-webplayer-<ver>-amd64.AppImage
+./netmusic-webplayer-<ver>-amd64.AppImage
+```
+
+### 从源码构建（所有发行版通用）
+
+装好上面的构建依赖后：
+
+```bash
+pnpm install
+./tools/build-linux-tauri.sh              # deb + rpm + AppImage
+./tools/build-linux-tauri.sh deb rpm      # 只出指定目标
+./tools/build-pacman-tauri.sh             # pacman（仅 Arch，需 makepkg）
+```
+
+无 root 环境（容器/CI 之外）的音频插件可用 `tools/setup-gst.sh` 下载解包到用户目录兜底。
 
 ## 开发
 
