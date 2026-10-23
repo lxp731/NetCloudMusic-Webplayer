@@ -32,7 +32,7 @@ makepkg -f --skippgpcheck
 # 5. 重命名产物：netmusic-webplayer-bin-<ver>-1-x86_64.pkg.tar.zst
 #              → netmusic-webplayer-<ver>-x64.pacman
 mkdir -p "$OLDPWD/dist"
-PKG="$(ls netmusic-webplayer-bin-*.pkg.tar.zst)"
+PKG="$(ls netmusic-webplayer-bin-*.pkg.tar.zst | grep -v -- '-debug-' | head -n1)"
 mv -f "$PKG" "$OLDPWD/dist/netmusic-webplayer-$VERSION-x64.pacman"
 
 echo

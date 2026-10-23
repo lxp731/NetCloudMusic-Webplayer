@@ -6,6 +6,8 @@
 pkgname=netmusic-webplayer-bin
 pkgver=0.1.0
 pkgrel=1
+# 不生成 -debug 分离包（release 二进制已 strip）
+options=(!debug)
 pkgdesc="网易云音乐网页版的 Linux 桌面应用（Tauri/WebKitGTK 版）"
 arch=('x86_64')
 url="https://github.com/lxp731/NetCloudMusic-Webplayer"
