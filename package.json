@@ -1,33 +1,17 @@
 {
   "name": "netcloud-music",
-  "productName": "NetCloud Music",
   "version": "0.1.0",
-  "description": "Linux desktop shell for the NetEase Cloud Music web player",
-  "main": "src/main/index.js",
+  "description": "网易云音乐网页版（music.163.com/st/webplayer）的 Linux 桌面外壳（Tauri/WebKitGTK 版）",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "electron .",
-    "dev": "./tools/dev-run.sh --dev",
-    "probe": "NETCLOUD_VERBOSE=1 ./tools/dev-run.sh --dev --probe",
-    "dist": "electron-builder --linux",
-    "dist:appimage": "electron-builder --linux AppImage",
-    "dist:pacman": "electron-builder --linux pacman",
-    "dist:deb": "electron-builder --linux deb",
-    "dist:rpm": "electron-builder --linux rpm"
-  },
-  "dependencies": {
-    "dbus-next": "^0.10.2"
+    "dev": "./tools/dev-run-tauri.sh",
+    "build": "./tools/build-linux-tauri.sh",
+    "build:pacman": "./tools/build-pacman-tauri.sh",
+    "tauri": "tauri"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.12.4",
-    "electron": "^42.11.18",
-    "electron-builder": "^26.15.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "electron"
-    ]
+    "@tauri-apps/cli": "^2.12.4"
   },
   "author": {
     "name": "netcloud-music contributors",
@@ -37,6 +21,5 @@
     "type": "git",
     "url": "https://github.com/lxp731/NetCloudMusic-Webplayer"
   },
-  "homepage": "https://github.com/lxp731/NetCloudMusic-Webplayer",
-  "desktopName": "netcloud-music.desktop"
+  "homepage": "https://github.com/lxp731/NetCloudMusic-Webplayer"
 }

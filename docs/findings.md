@@ -53,52 +53,56 @@ class Audio {
 
 - **mediaSession.metadata** 干净地给出 标题/艺人/专辑/封面 —— 壳里劫持 setter 即可。
 - **`<audio>` 元素不挂在 DOM 上**（howler `html5: true` 只 `createElement` 不 append），
-  所以 document 级事件监听和 `querySelectorAll('audio')` 都拿不到（实测 `media: []`）。
-  正确做法是 patch `Document.prototype.createElement` 和 `HTMLMediaElement.prototype.play`
-  去捕获元素本体，然后在元素上直接监听 `play/pause/timeupdate/...`。
-
-`navigator.mediaSession.setActionHandler` 只在**桌面端热键通道**里注册（`subscribeHotKey`，
-把播放控制转发给 native），网页版模式不会注册。所以控制方向不能依赖它，只能：
-
-1. `el.play() / el.pause() / el.currentTime`（有元素时最可靠）
-2. 点击播放条控件。播放条的图标是 `<svg role="img" aria-label="{type}" class="cmd-icon cmd-icon-{type}">`，
-   实测 bottom bar 的 aria-label 为：`pre` `pause` `next` `loop` `volume` `playlist`
-   （注意是 `pre` 不是 `prev`）。
+  所以 document 级事件监听和 `querySelectorAll('audio')` 都拿不到。正确做法是 patch
+  `Document.prototype.createElement` 和 `HTMLMediaElement.prototype.play` 去捕获元素本体，
+  然后在元素上直接监听 `play/pause/timeupdate/...`。
 
 ## 3. 登录行为
 
 未登录时 `/st/webplayer` 会主动跳到：
 
 ```
-https://music.163.com/login?targetUrl=<encoded 当前地址>   →  https://music.163.com/#/login?targetUrl=...
+https://music.163.com/login?targetUrl=<encoded 当前地址>   →   https://music.163.com/#/login?targetUrl=...
 ```
 
-这是站点自己的逻辑（bundle 里有构造该 URL 的 helper），不是壳的 bug。
-登录成功后回跳 `targetUrl`，cookie（`MUSIC_U` 等）落在 `persist:netease` 分区。
+这是站点自己的逻辑，不是壳的 bug。登录成功后回跳 `targetUrl`，cookie（`MUSIC_U` 等）
+落在 webview 的 cookie store。
 
-## 4. 与 Electron 相关的一些坑
+## 4. 与 WebKitGTK / Tauri 相关的一些坑
 
-- Electron 42 的 `libffmpeg.so` 带 H.264/AAC（`canPlayType` 全为 `probably`），MV/视频可用。
-- UA 需要伪装成普通 Chrome，Electron 默认 UA 会让站点走未知分支。
-- Electron 的 `app.setName()` **不会**改 `userData` 路径（由 package.json 的 `productName` 决定），
-  必须 `app.setPath('userData', …)`。
-- `webPreferences.backgroundThrottling: false` + `autoplayPolicy: 'no-user-gesture-required'`
-  保证托盘隐藏时继续播放、合成点击也能起播。
-- 窗口隐藏（`show: false`）时站点的登录/鉴权逻辑可能不跑，会停在 SPA 骨架；
-  测试时不要用隐藏窗口判断"页面是否正常"。
+Electron（Chromium）无这些问题的原因在于 Chromium 自带完整 Web 平台实现和音频栈。
+WebKitGTK 需要逐项适配（都在 `src-tauri/assets/chrome-spoof.js` 和启动逻辑里处理）：
 
-## 5. 复现用命令
+- **白屏**：WebKitGTK 缺 `requestIdleCallback`（Chromium 专有）。站点桌面音频引擎 rudio
+  调用它抛 `ReferenceError` → 初始化 reject → React 不挂载（`#root` 空、`innerText` 空）。
+  → polyfill：`setTimeout` 实现。
+- **身份嗅探**：即使 UA 伪装成 Chrome，`window.chrome` 缺失 + `navigator.vendor =
+  "Apple Computer, Inc."` 仍暴露 WebKit。→ 补 `window.chrome` + `navigator.vendor` +
+  `navigator.userAgentData`（Client Hints）。
+- **播放失败 + `GLib-GObject-CRITICAL`**：WebKitGTK 播放走系统 GStreamer，`playbin` 用
+  `autoaudiosink` 选音频输出；系统缺 `gst-plugins-good` 时该元素不存在，管线建不起来。
+  → 装 `gst-plugins-good`，或 `tools/setup-gst.sh` 把插件解包到用户目录用 `GST_PLUGIN_PATH` 接上。
+- **远程 URL 的 IPC 被拒**：Tauri 2 默认只让 bundled 代码调 IPC，远程 URL 调自定义
+  command 报 `not allowed. Plugin not found`。→ `build.rs` 用 `AppManifest::commands`
+  注册命令 + `capabilities/default.json` 里 `remote.urls` 授权。
+- **`eval` 的 postMessage 不派发**：WebKitGTK `run_javascript` 里发 `window.postMessage`
+  不会派发 message 事件给页面世界的监听器。→ 壳 → 页面方向改用 `eval` 直接调
+  page-hook 暴露的 `window.__netcloudCommand`；页面 → 壳方向仍用 postMessage + bridge。
+- **窗口尺寸单位**：`WindowEvent::Resized/Moved` 给物理像素，直接当逻辑像素恢复会让
+  高 DPI 下窗口比屏幕大。→ 保存时用 `scale_factor` 转逻辑像素，加载时越界重置。
+- **target=_blank**：Tauri 默认放行新窗口 → 一堆 about:blank 弹窗。→ `on_new_window` 拦截。
+
+## 5. 复现与诊断
 
 ```bash
+# 抓当前 bundle 地址
 curl -s https://music.163.com/st/webplayer | grep -oE 'src="[^"]*app\.[a-f0-9]+\.js"' | head
-# 然后直接 grep 关键实现
 curl -s <app.js url> -o app.js
 grep -o 'setMediaSession' app.js | wc -l
 grep -oE '"(audioplayer|app|storage|player|winhelper)\.[a-zA-Z]+"' app.js | sort -u
 ```
 
-运行中的壳也可以直接 dump 页面状态：
-
-```bash
-kill -USR1 <main-pid>   # 日志里出现 [dump] {...}
-```
+页面内诊断（WebKitGTK 的 JS console 不暴露）：在初始化脚本里用
+`window.addEventListener('error'/'unhandledrejection')` 把错误收进全局数组，再用
+Rust 侧 `webview.eval_with_callback(...)` 把 `JSON.stringify` 的页面状态（`innerText`
+长度、`#root` 内容、错误数组）拉回日志。这是定位「白屏/前端崩溃」的关键手段。

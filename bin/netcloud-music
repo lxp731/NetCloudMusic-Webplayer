@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# Dev launcher used by the .desktop entry (packaged builds use the real binary).
-exec "$(dirname "$(readlink -f "$0")")/../tools/dev-run.sh" "$@"

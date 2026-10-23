@@ -18,8 +18,8 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 cp packaging/pacman/PKGBUILD "$WORK/PKGBUILD"
-cp build/netcloud-music.desktop "$WORK/netcloud-music.desktop"
-cp build/icons/256x256.png "$WORK/netcloud-music.png"
+cp packaging/pacman/netcloud-music.desktop "$WORK/netcloud-music.desktop"
+cp packaging/pacman/netcloud-music.png "$WORK/netcloud-music.png"
 cp src-tauri/target/release/netcloud-music "$WORK/netcloud-music"
 
 # 3. 替换版本号

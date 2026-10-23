@@ -11,55 +11,51 @@ permissions:
   contents: write # 创建 Release 需要
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # 新版 Node：24 LTS。pnpm 10 需要 Node >= 18.12，electron-builder 26 也
-      # 建议用较新的 LTS，这里固定 24 避免 runner 默认的旧版本。
       - uses: pnpm/action-setup@v4
         with:
           version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
 
-      # deb 需要 dpkg-deb（ubuntu 自带）；rpm 需要 rpmbuild；pacman 需要 bsdtar。
-      # electron-builder 的 fpm 会从 PATH 里找这些工具。
-      - name: Install packaging tools
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # Tauri 编译需要 webkit2gtk-4.1 等开发包；deb/rpm 打包需要 rpm 与 bsdtar。
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y rpm libarchive-tools
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            build-essential curl wget file libssl-dev \
+            rpm libarchive-tools
 
-      # 缓存 electron / fpm 下载，二次构建快很多。
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ runner.os }}-electron-${{ hashFiles('package.json') }}
-
-      - name: Install dependencies
+      - name: Install npm dependencies
         run: pnpm install --frozen-lockfile
 
-      # Release 版本必须和 package.json 一致，避免产物文件名和 tag 对不上。
+      # Release 版本必须和 src-tauri/Cargo.toml 一致，避免产物文件名和 tag 对不上。
       - name: Verify version matches tag
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-          PKG_VERSION="$(node -p "require('./package.json').version")"
+          PKG_VERSION="$(grep -m1 '^version = ' src-tauri/Cargo.toml | sed 's/.*"\([^"]*\)".*/\1/')"
           echo "tag=$TAG_VERSION pkg=$PKG_VERSION"
           [ "$TAG_VERSION" = "$PKG_VERSION" ] || {
-            echo "::error::tag v$TAG_VERSION 与 package.json 的 $PKG_VERSION 不一致，先 bump 版本再打 tag"
+            echo "::error::tag v$TAG_VERSION 与 src-tauri/Cargo.toml 的 $PKG_VERSION 不一致，先 bump 版本再打 tag"
             exit 1
           }
 
-      - name: Build Linux packages (AppImage / deb / rpm / pacman)
-        # publish 已在 electron-builder.yml 里置为 null，这里只产出分发包，
-        # 发布由下面的 softprops/action-gh-release 完成。
-        run: pnpm dist
+      - name: Build Linux packages (deb / rpm / AppImage)
+        run: ./tools/build-linux-tauri.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -67,18 +63,50 @@ jobs:
           name: linux-packages
           if-no-files-found: error
           path: |
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
-            dist/*.pacman
+            src-tauri/target/release/bundle/deb/*-tauri-*.deb
+            src-tauri/target/release/bundle/rpm/*-tauri-*.rpm
+            src-tauri/target/release/bundle/appimage/*-tauri-*.AppImage
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
-            dist/*.pacman
+            src-tauri/target/release/bundle/deb/*-tauri-*.deb
+            src-tauri/target/release/bundle/rpm/*-tauri-*.rpm
+            src-tauri/target/release/bundle/appimage/*-tauri-*.AppImage
+          generate_release_notes: true
+
+  build-pacman:
+    # makepkg 是 Arch 工具，用 Arch 容器跑（产物 netcloud-music-<ver>-tauri-x64.pacman）。
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust and build dependencies
+        run: |
+          pacman -Sy --noconfirm rust webkit2gtk-4.1 libayatana-appindicator \
+            gst-plugins-good gst-plugins-base-libs gst-libav gst-plugin-pipewire \
+            base-devel git
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Build pacman package
+        run: ./tools/build-pacman-tauri.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pacman-package
+          if-no-files-found: error
+          path: dist/*.pacman
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.pacman
           generate_release_notes: true
