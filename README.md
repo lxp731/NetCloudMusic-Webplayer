@@ -41,7 +41,7 @@ Tauri（Rust + 系统 WebKitGTK），而不是 Electron（自带 Chromium）。
 
 ## 构建与分发
 
-产物（4 种格式）：
+产物（3 种格式）：
 
 ```
 netmusic-webplayer-0.1.0-amd64.deb
