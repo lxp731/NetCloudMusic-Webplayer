@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main window capability: allow the official web player (and its login hops) to talk to the shell via IPC.",
+  "windows": ["main"],
+  "remote": {
+    "urls": [
+      "https://music.163.com",
+      "https://*.music.163.com",
+      "https://*.163.com",
+      "https://*.126.net",
+      "https://*.127.net",
+      "https://*.163yun.com",
+      "https://*.netease.com",
+      "https://*.qq.com",
+      "https://*.weixin.qq.com"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "allow-media-state",
+    "allow-page-event",
+    "allow-page-probe",
+    "allow-shell-retry",
+    "allow-shell-info"
+  ]
+}
