@@ -88,9 +88,11 @@ jobs:
       - name: Create builder user and install dependencies
         run: |
           useradd -m builder
-          pacman -Sy --noconfirm rust webkit2gtk-4.1 libayatana-appindicator \
+          # 与 packaging/pacman/PKGBUILD 的 depends 保持一致
+          pacman -Sy --noconfirm rust base-devel git \
+            webkit2gtk-4.1 gtk3 libayatana-appindicator \
             gst-plugins-good gst-plugins-base-libs gst-libav gst-plugin-pipewire \
-            base-devel git
+            hicolor-icon-theme xdg-utils
 
       - name: Grant workspace to builder
         run: chown -R builder:builder "$GITHUB_WORKSPACE"
