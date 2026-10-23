@@ -96,13 +96,13 @@ Rust 壳 (src-tauri/src/*)
 - **产物命名**：Tauri bundler 不支持自定义 artifactName，产物名固定
   `netcloud-music_<ver>_<arch>.{deb,AppImage}` / `netcloud-music-<ver>-<release>.<arch>.rpm`。
   `tools/rename-tauri-bundles.sh` 统一重命名为 `netmusic-webplayer-<ver>-<arch>.<ext>`。
-- **pacman**：Tauri bundler 无 pacman target，走 `packaging/pacman/PKGBUILD`
-  （`tools/build-pacman-tauri.sh`）。pkgname `netmusic-webplayer-bin`，
-  `conflicts=('netmusic-webplayer' 'netcloud-music' 'netcloud-music-tauri')`，`provides=('netmusic-webplayer')`。
+- **AUR（Arch）**：pacman 包不在本仓库构建，由独立的 AUR 包
+  `netmusic-webplayer-bin`（仓库 ~/workspace/aur-netmusic-webplayer）提供，其 PKGBUILD
+  从 GitHub Release 下载 deb 包再解包安装。
 
 ## 系统依赖
 
-运行时必需（deb/rpm/pacman 已声明，CI 也装）：
+运行时必需（deb/rpm 已声明，AUR 的 PKGBUILD 也声明）：
 `webkit2gtk-4.1`（渲染）、`gst-plugins-good`（**autoaudiosink**，缺了播不了）、
 `gst-plugins-base-libs` + `gst-libav`（MP3/AAC/FLAC 解码）+ `gst-plugin-pipewire`（输出）、
 `libayatana-appindicator`（托盘）、`gtk3`、`hicolor-icon-theme`、`xdg-utils`。
@@ -116,11 +116,10 @@ Rust 壳 (src-tauri/src/*)
 ./tools/dev-run-tauri.sh              # dev：cargo build + 运行（自动处理音频插件）
 ./tools/build-linux-tauri.sh          # deb + rpm + AppImage（自动下载 dpkg-deb/rpmbuild）
 ./tools/build-linux-tauri.sh deb rpm  # 指定目标
-./tools/build-pacman-tauri.sh         # pacman（PKGBUILD + makepkg）
 ```
 
 产物在 `dist/` 和 `src-tauri/target/release/bundle/`，统一命名：
-`netmusic-webplayer-<ver>-{amd64,x86_64,x64}.{deb,rpm,AppImage,pacman}`。
+`netmusic-webplayer-<ver>-{amd64,x86_64}.{deb,rpm,AppImage}`。
 
 版本号唯一来源：`src-tauri/Cargo.toml` 的 `version`（tauri.conf.json 和 CI 都从这读）。
 
@@ -144,8 +143,7 @@ Rust 壳 (src-tauri/src/*)
 ```
 src-tauri/          Rust 壳（src/ + assets/ + capabilities/ + icons/ + tauri.conf.json）
 frontend/index.html 本地错误页
-packaging/pacman/   PKGBUILD + .desktop + 256 图标
-tools/              dev-run-tauri / build-linux-tauri / build-pacman-tauri / setup-gst / rename-tauri-bundles
+tools/              dev-run-tauri / build-linux-tauri / setup-gst / rename-tauri-bundles
 docs/               PLAN.md（现状+路线）+ findings.md（逆向+坑）
 ```
 
@@ -156,7 +154,7 @@ docs/               PLAN.md（现状+路线）+ findings.md（逆向+坑）
   `netcloud-music`；MPRIS bus 名 = `org.mpris.MediaPlayer2.netcloud_music`。
 - 资源（page-hook.js/bridge.js/chrome-spoof.js/tray.png）用 `include_str!`/`include_bytes!`
   编译进二进制，改这些文件需 `cargo build` 才生效（cargo 会跟踪 include 的文件变化）。
-- 图标源在 `src-tauri/icons/` 和 `packaging/pacman/`，两处独立副本，改图标要同步。
+- 图标源在 `src-tauri/icons/`；AUR 仓库（~/workspace/aur-netmusic-webplayer）有自己的图标副本。
 - 登录态存在 WebKitGTK 的 cookie store（`~/.local/share/io.github.lxp731.netcloudmusic`），
   与 Electron 的 Chromium store 不通用，换引擎需重新扫码一次。
 

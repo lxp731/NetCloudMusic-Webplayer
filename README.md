@@ -41,7 +41,6 @@ Tauri（Rust + 系统 WebKitGTK），而不是 Electron（自带 Chromium）。
 netmusic-webplayer-0.1.0-amd64.deb
 netmusic-webplayer-0.1.0-x86_64.rpm
 netmusic-webplayer-0.1.0-amd64.AppImage
-netmusic-webplayer-0.1.0-x64.pacman
 ```
 
 安装预编译包时，运行时依赖（webkit2gtk、gst-plugins-good 等）由包管理器自动解析，
@@ -49,18 +48,18 @@ netmusic-webplayer-0.1.0-x64.pacman
 
 ### Arch Linux
 
+Arch 用户从 AUR 安装（包名 `netmusic-webplayer-bin`）：
+
 ```bash
-# 安装（依赖自动解决）
-sudo pacman -U netmusic-webplayer-<ver>-x64.pacman
+# 安装（AUR helper，依赖自动解决）
+yay -S netmusic-webplayer-bin        # 或 paru -S netmusic-webplayer-bin
 
 # 从源码构建：先装构建依赖
 sudo pacman -S --needed rust base-devel nodejs pnpm \
   webkit2gtk-4.1 libayatana-appindicator \
   gst-plugins-good gst-plugins-base-libs gst-libav gst-plugin-pipewire
 
-# 构建 pacman 包（makepkg）
-./tools/build-pacman-tauri.sh
-# 或构建 deb/rpm/AppImage（脚本会自动下载 dpkg/rpm 工具）
+# 构建 deb/rpm/AppImage（脚本会自动下载 dpkg/rpm 工具）
 ./tools/build-linux-tauri.sh
 ```
 
@@ -117,7 +116,6 @@ chmod +x netmusic-webplayer-<ver>-amd64.AppImage
 pnpm install
 ./tools/build-linux-tauri.sh              # deb + rpm + AppImage
 ./tools/build-linux-tauri.sh deb rpm      # 只出指定目标
-./tools/build-pacman-tauri.sh             # pacman（仅 Arch，需 makepkg）
 ```
 
 无 root 环境（容器/CI 之外）的音频插件可用 `tools/setup-gst.sh` 下载解包到用户目录兜底。

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 构建 Tauri 分发包：deb + rpm + AppImage（Tauri bundler 不支持 pacman）。
+# 构建 Tauri 分发包：deb + rpm + AppImage。
 #
 # deb/rpm 需要 dpkg-deb 和 rpmbuild；本机（Arch）可能没有。本脚本在系统里
 # 找不到时，自动用 pacman 下载 dpkg / rpm-tools 包并解包到缓存目录（不安装、
