@@ -6,7 +6,7 @@
 pkgname=netcloud-music-tauri
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="网易云音乐网页版的 Linux 桌面外壳（Tauri/WebKitGTK 版）"
+pkgdesc="网易云音乐网页版的 Linux 桌面应用（Tauri/WebKitGTK 版）"
 arch=('x86_64')
 url="https://github.com/lxp731/NetCloudMusic-Webplayer"
 license=('MIT')
