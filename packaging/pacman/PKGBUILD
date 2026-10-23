@@ -21,7 +21,7 @@ depends=(
   'hicolor-icon-theme'
   'xdg-utils'
 )
-conflicts=('netcloud-music')
+conflicts=('netmusic-webplayer-bin' 'netcloud-music')
 provides=('netcloud-music')
 source=("netcloud-music" "netcloud-music.desktop" "netcloud-music.png")
 sha256sums=('SKIP' 'SKIP' 'SKIP')
