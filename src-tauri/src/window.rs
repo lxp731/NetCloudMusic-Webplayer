@@ -15,6 +15,7 @@ use crate::config;
 
 static PAGE_HOOK: &str = include_str!("../assets/page-hook.js");
 static BRIDGE: &str = include_str!("../assets/bridge.js");
+static CHROME_SPOOF: &str = include_str!("../assets/chrome-spoof.js");
 
 static TRAY_AVAILABLE: AtomicBool = AtomicBool::new(false);
 static QUITTING: AtomicBool = AtomicBool::new(false);
@@ -88,6 +89,7 @@ pub fn create_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
         .min_inner_size(900.0, 600.0)
         .background_color(Color(0, 0, 0, 255))
         .user_agent(config::USER_AGENT)
+        .initialization_script(CHROME_SPOOF)
         .initialization_script(PAGE_HOOK)
         .initialization_script(BRIDGE)
         .on_navigation(|url| {

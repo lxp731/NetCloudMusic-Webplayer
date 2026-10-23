@@ -11,6 +11,24 @@
   if (window.__netcloudBridgeHooked) return
   window.__netcloudBridgeHooked = true
 
+  // Capture early JS errors for diagnostics (WebKitGTK console isn't exposed).
+  window.__netcloudErrors = []
+  window.addEventListener('error', function (e) {
+    try {
+      window.__netcloudErrors.push(String(e.message) + ' @' + (e.filename || '') + ':' + (e.lineno || 0))
+    } catch (_) {}
+  })
+  window.addEventListener('unhandledrejection', function (e) {
+    try {
+      var r = e.reason
+      var info
+      if (r && r.message) info = 'msg=' + r.message + ' name=' + (r.name || '')
+      else if (typeof r === 'string') info = r
+      else info = JSON.stringify(r).slice(0, 600)
+      window.__netcloudErrors.push('rejection: ' + info + '\n' + String(r && r.stack || '').slice(0, 400))
+    } catch (_) {}
+  })
+
   var CHANNEL = '__netcloud'
 
   function invoke (cmd, payload) {
