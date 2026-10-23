@@ -78,24 +78,25 @@ jobs:
           generate_release_notes: true
 
   build-pacman:
-    # makepkg 是 Arch 工具，用 Arch 容器跑（产物 netmusic-webplayer-<ver>-x64.pacman）。
+    # makepkg 是 Arch 工具且拒绝 root，用 Arch 容器 + 非 root 用户跑
+    # （产物 netmusic-webplayer-<ver>-x64.pacman）。
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust and build dependencies
+      - name: Create builder user and install dependencies
         run: |
+          useradd -m builder
           pacman -Sy --noconfirm rust webkit2gtk-4.1 libayatana-appindicator \
             gst-plugins-good gst-plugins-base-libs gst-libav gst-plugin-pipewire \
             base-devel git
 
-      - uses: swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
+      - name: Grant workspace to builder
+        run: chown -R builder:builder "$GITHUB_WORKSPACE"
 
       - name: Build pacman package
-        run: ./tools/build-pacman-tauri.sh
+        run: su builder -c "cd '$GITHUB_WORKSPACE' && ./tools/build-pacman-tauri.sh"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
