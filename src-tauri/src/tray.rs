@@ -14,7 +14,6 @@ use crate::media::MediaStore;
 static TRAY_PNG: &[u8] = include_bytes!("../assets/tray.png");
 
 pub struct Tray {
-    title_item: MenuItem<Wry>,
     play_item: MenuItem<Wry>,
     _tray: TrayIcon<Wry>,
 }
@@ -29,7 +28,6 @@ impl Tray {
             }
         };
 
-        let title_item = MenuItem::with_id(app, "title", "未在播放", false, None::<&str>)?;
         let play_item = MenuItem::with_id(app, "playpause", "播放", true, None::<&str>)?;
         let prev_item = MenuItem::with_id(app, "prev", "上一首", true, None::<&str>)?;
         let next_item = MenuItem::with_id(app, "next", "下一首", true, None::<&str>)?;
@@ -37,8 +35,6 @@ impl Tray {
         let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
 
         let menu = Menu::new(app)?;
-        menu.append(&title_item)?;
-        menu.append(&PredefinedMenuItem::separator(app)?)?;
         menu.append(&play_item)?;
         menu.append(&prev_item)?;
         menu.append(&next_item)?;
@@ -82,35 +78,15 @@ impl Tray {
             .build(app)?;
 
         Ok(Some(Self {
-            title_item,
             play_item,
             _tray: tray,
         }))
     }
 
     pub fn refresh(&self, store: &MediaStore) {
-        let s = store.snapshot();
-        let playing = s.status == "Playing";
-        let title = if s.title.is_empty() {
-            "未在播放".to_string()
-        } else if s.artist.is_empty() {
-            s.title.clone()
-        } else {
-            format!("{} — {}", s.title, s.artist)
-        };
-        let _ = self.title_item.set_text(truncate(&title, 60));
+        let playing = store.snapshot().status == "Playing";
         let _ = self
             .play_item
             .set_text(if playing { "暂停" } else { "播放" });
-    }
-}
-
-fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() > n {
-        let mut out: String = s.chars().take(n - 1).collect();
-        out.push('…');
-        out
-    } else {
-        s.to_string()
     }
 }
